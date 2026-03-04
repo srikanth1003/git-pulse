@@ -1,0 +1,31 @@
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+.idea/
+.vscode/
+
+# Environment
+.env
+.env.*
+.venv/
+venv/
+env/
+
+# Claude Code
+.claude/
+
+# Generated reports
+*-report.json
+
+# Internal dev docs
+docs/superpowers/
