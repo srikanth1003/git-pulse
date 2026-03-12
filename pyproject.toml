@@ -4,11 +4,41 @@ build-backend = "hatchling.build"
 
 [project]
 name = "git-pulse"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Analyze git repo history for development hotspots with LLM-powered insights"
 readme = "README.md"
 license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.10"
+authors = [
+    { name = "srikanth1003" },
+]
+keywords = [
+    "git",
+    "git-history",
+    "code-analysis",
+    "code-quality",
+    "hotspots",
+    "technical-debt",
+    "developer-productivity",
+    "llm",
+    "ai",
+    "coding-agents",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Version Control :: Git",
+    "Topic :: Utilities",
+]
 dependencies = [
     "typer>=0.9.0",
     "gitpython>=3.1.0",
@@ -22,8 +52,19 @@ dev = [
     "pytest-cov>=4.0.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/srikanth1003/git-pulse"
+Repository = "https://github.com/srikanth1003/git-pulse"
+Issues = "https://github.com/srikanth1003/git-pulse/issues"
+
 [project.scripts]
 git-pulse = "git_pulse.cli:app"
+
+[tool.hatch.version]
+path = "src/git_pulse/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/git_pulse"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

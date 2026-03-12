@@ -21,7 +21,9 @@ console = Console()
 @app.command()
 def version():
     """Show version information."""
-    console.print("git-pulse version 0.1.0")
+    from git_pulse import __version__
+
+    console.print(f"git-pulse version {__version__}")
 
 
 @app.command()
