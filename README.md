@@ -1,6 +1,12 @@
 # git-pulse
 
+[![PyPI](https://img.shields.io/pypi/v/gitpulse-ai)](https://pypi.org/project/gitpulse-ai/)
+[![Python](https://img.shields.io/pypi/pyversions/gitpulse-ai)](https://pypi.org/project/gitpulse-ai/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
+
 **Analyze git repository history for development hotspots and get LLM-powered insights to optimize your workflow.**
+
+> Installed from PyPI as [`gitpulse-ai`](https://pypi.org/project/gitpulse-ai/); the command is `git-pulse`.
 
 git-pulse examines your commit history to find rework patterns, codebase health issues, and — when coding agents are detected — specific prompt engineering guidance to reduce wasted iterations. It works on any git repo, with any LLM provider.
 
@@ -23,10 +29,10 @@ git-pulse auto-detects coding agent attribution from commit metadata — `Co-Aut
 ## Install
 
 ```bash
-pip install git-pulse
+pip install gitpulse-ai
 ```
 
-Requires Python 3.10+.
+Requires Python 3.10+. The installed command is `git-pulse`.
 
 ## Quick Start
 

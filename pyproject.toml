@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "git-pulse"
+name = "gitpulse-ai"
 dynamic = ["version"]
 description = "Analyze git repo history for development hotspots with LLM-powered insights"
 readme = "README.md"
