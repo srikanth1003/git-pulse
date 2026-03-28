@@ -29,3 +29,6 @@ env/
 
 # Internal dev docs
 docs/superpowers/
+
+# hatch-vcs generated
+src/git_pulse/_version.py

@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
@@ -61,7 +61,10 @@ Issues = "https://github.com/srikanth1003/git-pulse/issues"
 git-pulse = "git_pulse.cli:app"
 
 [tool.hatch.version]
-path = "src/git_pulse/__init__.py"
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/git_pulse/_version.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/git_pulse"]

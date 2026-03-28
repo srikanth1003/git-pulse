@@ -1,8 +1,13 @@
 # git-pulse
 
-[![PyPI](https://img.shields.io/pypi/v/gitpulse-ai)](https://pypi.org/project/gitpulse-ai/)
-[![Python](https://img.shields.io/pypi/pyversions/gitpulse-ai)](https://pypi.org/project/gitpulse-ai/)
+[![PyPI](https://img.shields.io/pypi/v/gitpulse-ai?logo=pypi&logoColor=white)](https://pypi.org/project/gitpulse-ai/)
+[![Python](https://img.shields.io/pypi/pyversions/gitpulse-ai?logo=python&logoColor=white)](https://pypi.org/project/gitpulse-ai/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
+
+[![Downloads](https://img.shields.io/pepy/dt/gitpulse-ai?label=total%20downloads&color=blue)](https://pepy.tech/project/gitpulse-ai)
+[![Downloads/month](https://img.shields.io/pypi/dm/gitpulse-ai?label=downloads%2Fmonth&color=blue)](https://pypistats.org/packages/gitpulse-ai)
+[![Release](https://img.shields.io/github/v/tag/srikanth1003/git-pulse?label=release&sort=semver)](https://github.com/srikanth1003/git-pulse/tags)
+[![Last commit](https://img.shields.io/github/last-commit/srikanth1003/git-pulse)](https://github.com/srikanth1003/git-pulse/commits/main)
 
 **Analyze git repository history for development hotspots and get LLM-powered insights to optimize your workflow.**
 
@@ -196,6 +201,18 @@ Git History ──► Collector Layer ──► Structured Report ──► Anal
 - Produces categorized insights with evidence and recommendations
 - Generates specific prompt guidance when agent attribution is detected
 
+## Releases & Downloads
+
+Latest release: [![Release](https://img.shields.io/github/v/tag/srikanth1003/git-pulse?label=&sort=semver&color=brightgreen)](https://github.com/srikanth1003/git-pulse/tags) on GitHub, [![PyPI](https://img.shields.io/pypi/v/gitpulse-ai?label=&color=brightgreen)](https://pypi.org/project/gitpulse-ai/) on PyPI.
+
+| | |
+|---|---|
+| **PyPI package** | [pypi.org/project/gitpulse-ai](https://pypi.org/project/gitpulse-ai/) |
+| **Release history** | [All versions on PyPI](https://pypi.org/project/gitpulse-ai/#history) · [Git tags](https://github.com/srikanth1003/git-pulse/tags) |
+| **Download stats** | [pepy.tech](https://pepy.tech/project/gitpulse-ai) (totals, by version) · [pypistats.org](https://pypistats.org/packages/gitpulse-ai) (daily, by Python version) |
+
+Versioning follows [Semantic Versioning](https://semver.org/). While the project is pre-1.0, minor versions may include breaking changes to the CLI and output schemas; pin an exact version if you depend on either.
+
 ## Development
 
 ```bash
@@ -210,6 +227,18 @@ pytest
 # Run on any repo
 git-pulse analyze /path/to/any/repo --days 14
 ```
+
+### Cutting a release
+
+The version is derived from the git tag by [hatch-vcs](https://github.com/ofek/hatch-vcs) — there is no version string to edit. Tag, then build and upload:
+
+```bash
+git tag -a v0.2.0 -m "git-pulse 0.2.0"
+git push origin v0.2.0
+python -m build && twine upload dist/*
+```
+
+Builds from an untagged or dirty tree produce a local dev version (e.g. `0.1.1.dev0+g1b73c1f`), which PyPI rejects by design — release only from a clean tagged commit.
 
 ## License
 
