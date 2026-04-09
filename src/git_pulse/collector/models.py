@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime
 
 
@@ -11,7 +11,9 @@ class Hotspot:
     line_end: int
     modification_count: int
     time_span_hours: float
-    classification: str  # agent-reworked | human-fixing-agent | repeated-agent | human-iteration | unknown
+    classification: (
+        str  # agent-reworked | human-fixing-agent | repeated-agent | human-iteration | unknown
+    )
     commit_hashes: list[str]
     diff_snippets: list[str]
     score: float

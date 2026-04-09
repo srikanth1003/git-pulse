@@ -1,5 +1,5 @@
+from git_pulse.analyst.models import AnalystReport, Insight
 from git_pulse.analyst.prompts import build_system_prompt, build_user_prompt
-from git_pulse.analyst.models import Insight, AnalystReport
 
 
 def test_build_system_prompt():

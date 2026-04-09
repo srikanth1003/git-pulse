@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
+
 
 @dataclass
 class Insight:
@@ -8,6 +10,7 @@ class Insight:
     severity: str
     evidence: list[str]
     recommendation: str
+
 
 @dataclass
 class AnalystReport:

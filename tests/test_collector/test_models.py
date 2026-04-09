@@ -1,11 +1,9 @@
 from datetime import datetime
+
 from git_pulse.collector.models import (
-    Hotspot,
-    FileChurnEntry,
     ChangeVelocity,
-    AgentHumanRatio,
-    WorkSession,
     CollectorReport,
+    Hotspot,
 )
 
 

@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import sys
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich.console import Console
@@ -29,17 +27,17 @@ def version():
 @app.command()
 def analyze(
     path: str = typer.Argument(".", help="Path to a git repository"),
-    days: Optional[int] = typer.Option(None, help="Analyze last N days of history"),
-    commits: Optional[int] = typer.Option(None, help="Analyze last N commits"),
-    branch: Optional[str] = typer.Option(None, help="Branch to analyze (default: current)"),
-    include: Optional[list[str]] = typer.Option(None, help="Only analyze files matching glob"),
-    exclude: Optional[list[str]] = typer.Option(None, help="Skip files matching glob"),
-    max_hotspots: Optional[int] = typer.Option(None, help="Max hotspots to send to LLM"),
-    model: Optional[str] = typer.Option(None, help="LiteLLM model string"),
+    days: int | None = typer.Option(None, help="Analyze last N days of history"),
+    commits: int | None = typer.Option(None, help="Analyze last N commits"),
+    branch: str | None = typer.Option(None, help="Branch to analyze (default: current)"),
+    include: list[str] | None = typer.Option(None, help="Only analyze files matching glob"),
+    exclude: list[str] | None = typer.Option(None, help="Skip files matching glob"),
+    max_hotspots: int | None = typer.Option(None, help="Max hotspots to send to LLM"),
+    model: str | None = typer.Option(None, help="LiteLLM model string"),
     json_output: bool = typer.Option(False, "--json", help="Output JSON instead of terminal"),
-    output: Optional[str] = typer.Option(None, help="Write report to file"),
+    output: str | None = typer.Option(None, help="Write report to file"),
     verbose: bool = typer.Option(False, help="Show collector metrics before LLM analysis"),
-    config: Optional[str] = typer.Option(None, help="Path to config file"),
+    config: str | None = typer.Option(None, help="Path to config file"),
 ) -> None:
     """Analyze a git repository for development hotspots and get LLM-powered insights."""
     repo_path = Path(path).resolve()
@@ -130,8 +128,9 @@ def analyze(
         console.print(f"[red]LLM analysis failed:[/red] {e}")
         if verbose:
             from git_pulse.renderer.terminal import _render_verbose
+
             _render_verbose(console, collector_report)
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
     # Render
     if json_output:

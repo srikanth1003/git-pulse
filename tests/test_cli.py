@@ -1,10 +1,9 @@
 import subprocess
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from typer.testing import CliRunner
 
 from git_pulse.cli import app
-
 
 runner = CliRunner()
 

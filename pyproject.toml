@@ -9,7 +9,7 @@ description = "Analyze git repo history for development hotspots with LLM-powere
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 authors = [
     { name = "srikanth1003" },
 ]
@@ -31,16 +31,17 @@ classifiers = [
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Quality Assurance",
     "Topic :: Software Development :: Version Control :: Git",
     "Topic :: Utilities",
 ]
 dependencies = [
-    "typer>=0.9.0",
+    # 0.13 is the first release that accepts PEP 604 (`int | None`) option annotations.
+    "typer>=0.13.0",
     "gitpython>=3.1.0",
     "litellm>=1.0.0",
     "rich>=13.0.0",
@@ -76,14 +77,19 @@ testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py310"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
 ignore = ["E501"]
 
+[tool.ruff.lint.per-file-ignores]
+# typer's documented idiom is calls in argument defaults.
+"src/git_pulse/cli.py" = ["B008"]
+"src/git_pulse/cli/*.py" = ["B008"]
+
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.11"
 files = ["src/git_pulse"]
 warn_unused_ignores = true
 warn_redundant_casts = true
@@ -93,3 +99,8 @@ no_implicit_optional = true
 [[tool.mypy.overrides]]
 module = ["litellm.*", "git.*"]
 ignore_missing_imports = true
+
+# Legacy modules predating the type-annotation baseline; annotated incrementally.
+[[tool.mypy.overrides]]
+module = ["git_pulse.collector.*", "git_pulse.cli", "git_pulse.config"]
+disallow_untyped_defs = false

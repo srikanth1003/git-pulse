@@ -96,9 +96,7 @@ class MetricsCalculator:
             return 0.0
 
         reworked_lines = sum(
-            file_line_counts[path]
-            for path, count in file_commit_count.items()
-            if count > 1
+            file_line_counts[path] for path, count in file_commit_count.items() if count > 1
         )
         return round(reworked_lines / total_lines, 4)
 
@@ -107,9 +105,7 @@ class MetricsCalculator:
         if not self.commits:
             return []
 
-        sorted_commits = sorted(
-            self.commits, key=lambda c: datetime.fromisoformat(c["timestamp"])
-        )
+        sorted_commits = sorted(self.commits, key=lambda c: datetime.fromisoformat(c["timestamp"]))
 
         gap = timedelta(minutes=SESSION_GAP_MINUTES)
         sessions: list[list[dict]] = [[sorted_commits[0]]]

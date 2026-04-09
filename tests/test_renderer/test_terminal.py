@@ -1,10 +1,10 @@
-from io import StringIO
 from datetime import datetime
+from io import StringIO
 
 from rich.console import Console
 
 from git_pulse.analyst.models import AnalystReport, Insight
-from git_pulse.collector.models import CollectorReport, ChangeVelocity
+from git_pulse.collector.models import ChangeVelocity, CollectorReport
 from git_pulse.renderer.terminal import render_terminal
 
 

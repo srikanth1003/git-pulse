@@ -1,23 +1,24 @@
 import json
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from git_pulse.analyst.engine import AnalystEngine
 from git_pulse.analyst.models import AnalystReport
 
-
-MOCK_LLM_RESPONSE = json.dumps({
-    "summary": "The repo shows heavy rework in auth module.",
-    "insights": [
-        {
-            "category": "REWORK_REDUCTION",
-            "title": "Auth middleware rewritten 4 times",
-            "severity": "high",
-            "evidence": ["src/auth.py modified in commits aaa, bbb, ccc, ddd"],
-            "recommendation": "Define auth interface before implementing",
-        }
-    ],
-    "top_actions": ["Define auth interface", "Split router.py", "Add tests"],
-})
+MOCK_LLM_RESPONSE = json.dumps(
+    {
+        "summary": "The repo shows heavy rework in auth module.",
+        "insights": [
+            {
+                "category": "REWORK_REDUCTION",
+                "title": "Auth middleware rewritten 4 times",
+                "severity": "high",
+                "evidence": ["src/auth.py modified in commits aaa, bbb, ccc, ddd"],
+                "recommendation": "Define auth interface before implementing",
+            }
+        ],
+        "top_actions": ["Define auth interface", "Split router.py", "Add tests"],
+    }
+)
 
 
 def test_analyze_calls_litellm():

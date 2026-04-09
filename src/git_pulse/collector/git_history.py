@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from git import Repo
-
 
 # Patterns that indicate agent involvement
 AGENT_PATTERNS = [
@@ -28,9 +28,10 @@ class GitHistoryCollector:
         exclude: list[str] | None = None,
     ) -> list[dict]:
         """Collect commit data from the repo. Returns list of commit dicts, most recent first."""
-        kwargs = {}
+        # Heterogeneous: "since" is a str, "max_count" an int.
+        kwargs: dict[str, Any] = {}
         if days is not None:
-            since = datetime.now(timezone.utc) - timedelta(days=days)
+            since = datetime.now(UTC) - timedelta(days=days)
             kwargs["since"] = since.isoformat()
         if commits is not None:
             kwargs["max_count"] = commits
@@ -40,7 +41,8 @@ class GitHistoryCollector:
 
         for commit in raw_commits:
             files = self._extract_files(commit, include, exclude)
-            is_agent, source = self._detect_attribution(commit.message)
+            # GitPython types Commit.message as str | bytes; it is str for UTF-8 repos.
+            is_agent, source = self._detect_attribution(commit.message)  # type: ignore[arg-type]
 
             result.append(
                 {
@@ -74,8 +76,16 @@ class GitHistoryCollector:
                 continue
 
             diff_text = diff.diff.decode("utf-8", errors="replace") if diff.diff else ""
-            insertions = sum(1 for line in diff_text.splitlines() if line.startswith("+") and not line.startswith("+++"))
-            deletions = sum(1 for line in diff_text.splitlines() if line.startswith("-") and not line.startswith("---"))
+            insertions = sum(
+                1
+                for line in diff_text.splitlines()
+                if line.startswith("+") and not line.startswith("+++")
+            )
+            deletions = sum(
+                1
+                for line in diff_text.splitlines()
+                if line.startswith("-") and not line.startswith("---")
+            )
 
             files.append(
                 {
@@ -99,4 +109,5 @@ class GitHistoryCollector:
     @staticmethod
     def _matches_any(path: str, patterns: list[str]) -> bool:
         from fnmatch import fnmatch
+
         return any(fnmatch(path, p) for p in patterns)

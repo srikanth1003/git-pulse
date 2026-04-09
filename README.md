@@ -37,7 +37,7 @@ git-pulse auto-detects coding agent attribution from commit metadata — `Co-Aut
 pip install gitpulse-ai
 ```
 
-Requires Python 3.10+. The installed command is `git-pulse`.
+Requires Python 3.11+. The installed command is `git-pulse`.
 
 ## Quick Start
 

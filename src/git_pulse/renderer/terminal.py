@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 from rich.console import Console
-from rich.markdown import Markdown
 from rich.panel import Panel
-from rich.syntax import Syntax
 from rich.table import Table
 
 from git_pulse.analyst.models import AnalystReport
@@ -74,7 +72,9 @@ def render_terminal(
 
         for insight in insights:
             color = SEVERITY_COLORS.get(insight.severity, "white")
-            console.print(f"  [{color}][{insight.severity.upper()}][/{color}] [bold]{insight.title}[/bold]")
+            console.print(
+                f"  [{color}][{insight.severity.upper()}][/{color}] [bold]{insight.title}[/bold]"
+            )
             for ev in insight.evidence:
                 console.print(f"    {ev}", style="dim")
 
@@ -98,9 +98,7 @@ def _render_prompt_guidance(console: Console, recommendation: str) -> None:
                 line = line.strip()
                 if not line:
                     continue
-                if line.startswith("PROBLEM:"):
-                    console.print(f"  [bold red]  {line}[/bold red]")
-                elif line.startswith("BAD PROMPT EXAMPLE:"):
+                if line.startswith("PROBLEM:") or line.startswith("BAD PROMPT EXAMPLE:"):
                     console.print(f"  [bold red]  {line}[/bold red]")
                 elif line.startswith("BETTER PROMPT EXAMPLE:"):
                     console.print(f"  [bold green]  {line}[/bold green]")
@@ -111,11 +109,13 @@ def _render_prompt_guidance(console: Console, recommendation: str) -> None:
         else:
             # Code block
             console.print()
-            console.print(Panel(
-                part.strip(),
-                border_style="dim",
-                padding=(0, 2),
-            ))
+            console.print(
+                Panel(
+                    part.strip(),
+                    border_style="dim",
+                    padding=(0, 2),
+                )
+            )
             console.print()
 
 
@@ -126,7 +126,9 @@ def _render_verbose(console: Console, report: CollectorReport) -> None:
     console.print(f"  Files changed: {report.total_files_changed}")
     console.print(f"  Rework rate: {report.rework_rate:.1%}")
     console.print(f"  Velocity: {report.change_velocity.commits_per_day} commits/day")
-    console.print(f"  Peak day: {report.change_velocity.peak_day} ({report.change_velocity.peak_commits} commits)")
+    console.print(
+        f"  Peak day: {report.change_velocity.peak_day} ({report.change_velocity.peak_commits} commits)"
+    )
 
     if report.agent_human_ratio:
         r = report.agent_human_ratio
@@ -144,7 +146,11 @@ def _render_verbose(console: Console, report: CollectorReport) -> None:
         table.add_column("Modifications", justify="right")
         table.add_column("+/-", justify="right")
         for entry in report.file_churn[:15]:
-            table.add_row(entry.file_path, str(entry.modification_count), f"+{entry.insertions}/-{entry.deletions}")
+            table.add_row(
+                entry.file_path,
+                str(entry.modification_count),
+                f"+{entry.insertions}/-{entry.deletions}",
+            )
         console.print(table)
 
     console.print()

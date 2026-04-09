@@ -1,5 +1,5 @@
 from git_pulse.collector.metrics import MetricsCalculator
-from git_pulse.collector.models import FileChurnEntry, ChangeVelocity, AgentHumanRatio, WorkSession
+from git_pulse.collector.models import ChangeVelocity
 
 
 def make_commit(hash, author, timestamp, files, is_agent=False):
@@ -16,13 +16,23 @@ def make_commit(hash, author, timestamp, files, is_agent=False):
 
 def test_file_churn():
     commits = [
-        make_commit("a", "dev", "2026-04-01T10:00:00+00:00", [
-            {"path": "a.py", "insertions": 5, "deletions": 2, "diff": ""},
-        ]),
-        make_commit("b", "dev", "2026-04-01T11:00:00+00:00", [
-            {"path": "a.py", "insertions": 3, "deletions": 1, "diff": ""},
-            {"path": "b.py", "insertions": 10, "deletions": 0, "diff": ""},
-        ]),
+        make_commit(
+            "a",
+            "dev",
+            "2026-04-01T10:00:00+00:00",
+            [
+                {"path": "a.py", "insertions": 5, "deletions": 2, "diff": ""},
+            ],
+        ),
+        make_commit(
+            "b",
+            "dev",
+            "2026-04-01T11:00:00+00:00",
+            [
+                {"path": "a.py", "insertions": 3, "deletions": 1, "diff": ""},
+                {"path": "b.py", "insertions": 10, "deletions": 0, "diff": ""},
+            ],
+        ),
     ]
     calc = MetricsCalculator(commits)
     churn = calc.file_churn()
@@ -35,9 +45,24 @@ def test_file_churn():
 
 def test_change_velocity():
     commits = [
-        make_commit("a", "dev", "2026-04-01T10:00:00+00:00", [{"path": "a.py", "insertions": 1, "deletions": 0, "diff": ""}]),
-        make_commit("b", "dev", "2026-04-01T14:00:00+00:00", [{"path": "b.py", "insertions": 1, "deletions": 0, "diff": ""}]),
-        make_commit("c", "dev", "2026-04-02T10:00:00+00:00", [{"path": "a.py", "insertions": 1, "deletions": 0, "diff": ""}]),
+        make_commit(
+            "a",
+            "dev",
+            "2026-04-01T10:00:00+00:00",
+            [{"path": "a.py", "insertions": 1, "deletions": 0, "diff": ""}],
+        ),
+        make_commit(
+            "b",
+            "dev",
+            "2026-04-01T14:00:00+00:00",
+            [{"path": "b.py", "insertions": 1, "deletions": 0, "diff": ""}],
+        ),
+        make_commit(
+            "c",
+            "dev",
+            "2026-04-02T10:00:00+00:00",
+            [{"path": "a.py", "insertions": 1, "deletions": 0, "diff": ""}],
+        ),
     ]
     calc = MetricsCalculator(commits)
     vel = calc.change_velocity()
@@ -72,12 +97,32 @@ def test_agent_human_ratio_no_attribution():
 
 def test_rework_rate():
     commits = [
-        make_commit("a", "dev", "2026-04-01T10:00:00+00:00", [
-            {"path": "a.py", "insertions": 10, "deletions": 0, "diff": "@@ -1,0 +1,10 @@\n+line"},
-        ]),
-        make_commit("b", "dev", "2026-04-01T11:00:00+00:00", [
-            {"path": "a.py", "insertions": 3, "deletions": 3, "diff": "@@ -1,3 +1,3 @@\n-old\n+new"},
-        ]),
+        make_commit(
+            "a",
+            "dev",
+            "2026-04-01T10:00:00+00:00",
+            [
+                {
+                    "path": "a.py",
+                    "insertions": 10,
+                    "deletions": 0,
+                    "diff": "@@ -1,0 +1,10 @@\n+line",
+                },
+            ],
+        ),
+        make_commit(
+            "b",
+            "dev",
+            "2026-04-01T11:00:00+00:00",
+            [
+                {
+                    "path": "a.py",
+                    "insertions": 3,
+                    "deletions": 3,
+                    "diff": "@@ -1,3 +1,3 @@\n-old\n+new",
+                },
+            ],
+        ),
     ]
     calc = MetricsCalculator(commits)
     rate = calc.rework_rate()
@@ -86,10 +131,25 @@ def test_rework_rate():
 
 def test_sessions():
     commits = [
-        make_commit("a", "dev", "2026-04-01T10:00:00+00:00", [{"path": "a.py", "insertions": 1, "deletions": 0, "diff": ""}]),
-        make_commit("b", "dev", "2026-04-01T10:15:00+00:00", [{"path": "b.py", "insertions": 1, "deletions": 0, "diff": ""}]),
+        make_commit(
+            "a",
+            "dev",
+            "2026-04-01T10:00:00+00:00",
+            [{"path": "a.py", "insertions": 1, "deletions": 0, "diff": ""}],
+        ),
+        make_commit(
+            "b",
+            "dev",
+            "2026-04-01T10:15:00+00:00",
+            [{"path": "b.py", "insertions": 1, "deletions": 0, "diff": ""}],
+        ),
         # 2 hour gap — new session
-        make_commit("c", "dev", "2026-04-01T12:30:00+00:00", [{"path": "a.py", "insertions": 1, "deletions": 0, "diff": ""}]),
+        make_commit(
+            "c",
+            "dev",
+            "2026-04-01T12:30:00+00:00",
+            [{"path": "a.py", "insertions": 1, "deletions": 0, "diff": ""}],
+        ),
     ]
     calc = MetricsCalculator(commits)
     sessions = calc.sessions()

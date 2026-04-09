@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import re
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import datetime
 
 from git_pulse.collector.models import Hotspot
-
 
 # Max lines apart to be considered same region
 LINE_PROXIMITY = 5

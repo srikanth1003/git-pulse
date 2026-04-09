@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import json
 
 SYSTEM_PROMPT = """You are GitPulse, a development workflow analyst. You receive a structured report of git repository activity and produce actionable insights.
@@ -72,8 +73,10 @@ Respond ONLY with valid JSON matching this schema:
 
 Be specific. Reference actual file names, line ranges, and commit patterns from the data. Do not give generic advice."""
 
+
 def build_system_prompt() -> str:
     return SYSTEM_PROMPT
+
 
 def build_user_prompt(report_dict: dict) -> str:
     return f"Analyze this repository activity report and provide insights:\n\n{json.dumps(report_dict, indent=2)}"

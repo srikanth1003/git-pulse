@@ -1,6 +1,4 @@
-from pathlib import Path
-
-from git_pulse.config import load_config, GitPulseConfig, DEFAULT_CONFIG
+from git_pulse.config import DEFAULT_CONFIG, load_config
 
 
 def test_default_config():
