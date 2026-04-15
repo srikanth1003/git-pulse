@@ -34,7 +34,6 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Quality Assurance",
     "Topic :: Software Development :: Version Control :: Git",
     "Topic :: Utilities",
@@ -74,6 +73,8 @@ packages = ["src/git_pulse"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Lets test helpers be imported as `tests.helpers.*` from the repo root.
+pythonpath = ["."]
 
 [tool.ruff]
 line-length = 100
