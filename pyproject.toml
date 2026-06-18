@@ -103,5 +103,5 @@ ignore_missing_imports = true
 
 # Legacy modules predating the type-annotation baseline; annotated incrementally.
 [[tool.mypy.overrides]]
-module = ["git_pulse.collector.*", "git_pulse.cli", "git_pulse.config"]
+module = ["git_pulse.collector.*", "git_pulse.cli"]
 disallow_untyped_defs = false
