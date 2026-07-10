@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 
 
 @dataclass(frozen=True)
@@ -52,3 +53,36 @@ class VelocityResult:
         if self.total_commits == 0:
             return 0.0
         return self.agent_commits / self.total_commits
+
+
+@dataclass(frozen=True)
+class WorkSession:
+    """A continuous stretch of one author's work, bounded by inactivity gaps."""
+
+    author: str  # email, the stable identity
+    author_name: str  # display name from the last commit in the session
+    start: datetime
+    end: datetime
+    commit_count: int
+    files_touched: int  # distinct paths
+    agent_commits: int
+    human_commits: int
+
+    @property
+    def duration_minutes(self) -> float:
+        return (self.end - self.start).total_seconds() / 60.0
+
+    @property
+    def agent_share(self) -> float:
+        if self.commit_count == 0:
+            return 0.0
+        return self.agent_commits / self.commit_count
+
+
+@dataclass(frozen=True)
+class SessionsResult:
+    sessions: tuple[WorkSession, ...]  # ordered by start, ascending
+    total_sessions: int
+    avg_commits_per_session: float
+    avg_duration_minutes: float
+    longest: WorkSession | None  # by commit count
