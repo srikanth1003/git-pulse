@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from git_pulse.models.history import AuthorClass, History
-from git_pulse.models.results import ChurnResult, FileChurn
+from git_pulse.models.results import ChurnResult, FileChurn, ReworkResult
 
 
 @dataclass
@@ -62,4 +62,52 @@ def analyze_churn(history: History, *, limit: int | None = None) -> ChurnResult:
         total_files=len(files),
         total_insertions=sum(f.insertions for f in files),
         total_deletions=sum(f.deletions for f in files),
+    )
+
+
+def analyze_rework(history: History) -> ReworkResult:
+    """Compute file-granularity rework rates.
+
+    Ported from ``MetricsCalculator.rework_rate`` in 0.1.0 so that upgrading does
+    not lose a metric. See :class:`ReworkResult` for why this over-reports.
+    """
+    churn_by_file: dict[str, int] = {}
+    commits_by_file: dict[str, int] = {}
+    agent_churn_by_file: dict[str, int] = {}
+    human_churn_by_file: dict[str, int] = {}
+
+    for commit in history.commits:
+        for change in commit.files:
+            # Collection already drops binaries; guard anyway, since a binary has
+            # no line count and would inflate ``total_files`` with zero churn.
+            if change.is_binary:
+                continue
+            churn = change.insertions + change.deletions
+            churn_by_file[change.path] = churn_by_file.get(change.path, 0) + churn
+            commits_by_file[change.path] = commits_by_file.get(change.path, 0) + 1
+            bucket = (
+                agent_churn_by_file
+                if commit.author_class is AuthorClass.AGENT
+                else human_churn_by_file
+            )
+            bucket[change.path] = bucket.get(change.path, 0) + churn
+
+    total_churn = sum(churn_by_file.values())
+    reworked = {p for p, n in commits_by_file.items() if n > 1}
+    reworked_churn = sum(churn_by_file[p] for p in reworked)
+
+    def _rate(source: dict[str, int]) -> float:
+        total = sum(source.values())
+        if not total:
+            return 0.0
+        return sum(source.get(p, 0) for p in reworked) / total
+
+    return ReworkResult(
+        file_rework_rate=(reworked_churn / total_churn) if total_churn else 0.0,
+        agent_rework_rate=_rate(agent_churn_by_file),
+        human_rework_rate=_rate(human_churn_by_file),
+        reworked_files=len(reworked),
+        total_files=len(churn_by_file),
+        reworked_churn=reworked_churn,
+        total_churn=total_churn,
     )

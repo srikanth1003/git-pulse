@@ -36,6 +36,25 @@ class ChurnResult:
 
 
 @dataclass(frozen=True)
+class ReworkResult:
+    """File-granularity rework, ported from 0.1.0.
+
+    ``file_rework_rate`` is the share of total churn that landed in files touched
+    by more than one commit. It is an **upper bound** on real rework: every line
+    in a multi-touch file counts, even lines nobody revisited. Phase 2's
+    line-lifetime index replaces this with a true per-line measurement.
+    """
+
+    file_rework_rate: float
+    agent_rework_rate: float
+    human_rework_rate: float
+    reworked_files: int  # files touched by more than one commit
+    total_files: int  # text files touched at all
+    reworked_churn: int
+    total_churn: int
+
+
+@dataclass(frozen=True)
 class VelocityResult:
     total_commits: int
     span_days: int  # calendar days from first to last commit, inclusive
