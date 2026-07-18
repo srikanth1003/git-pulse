@@ -86,3 +86,25 @@ class SessionsResult:
     avg_commits_per_session: float
     avg_duration_minutes: float
     longest: WorkSession | None  # by commit count
+
+
+@dataclass(frozen=True)
+class Hotspot:
+    """A region of a file edited repeatedly within a time window."""
+
+    file_path: str
+    line_start: int
+    line_end: int
+    modification_count: int  # distinct commits touching the region
+    time_span_hours: float
+    classification: str  # see hotspots.CLASSIFICATIONS
+    commit_shas: tuple[str, ...]  # chronological, one per modification
+    agent_modifications: int
+    human_modifications: int
+    score: float
+
+
+@dataclass(frozen=True)
+class HotspotsResult:
+    hotspots: tuple[Hotspot, ...]  # sorted by score, descending
+    total_detected: int  # before ``max_hotspots`` truncation
