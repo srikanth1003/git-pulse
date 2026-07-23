@@ -15,7 +15,13 @@ DEFAULT_MODEL = "anthropic/claude-sonnet-4-20250514"
 # Retained for backwards compatibility with existing callers and tests.
 DEFAULT_CONFIG: dict[str, Any] = {
     "llm": {"enabled": False, "model": DEFAULT_MODEL},
-    "analysis": {"default_days": 30, "max_hotspots": 20, "exclude": []},
+    "analysis": {
+        "default_days": 30,
+        "max_hotspots": 20,
+        "hotspot_window_hours": 72.0,
+        "hotspot_region_lines": 25,
+        "exclude": [],
+    },
 }
 
 
@@ -33,6 +39,8 @@ class AnalysisConfig:
     include_merges: bool = False
     bulk_commit_threshold: int = 100
     max_file_lines: int = 50000
+    hotspot_window_hours: float = 72.0
+    hotspot_region_lines: int = 25
     exclude: list[str] = field(default_factory=list)
 
 
@@ -83,6 +91,11 @@ class GitPulseConfig:
     sessions: SessionsConfig = field(default_factory=SessionsConfig)
     reverts: RevertsConfig = field(default_factory=RevertsConfig)
     ci: CIConfig = field(default_factory=CIConfig)
+
+    @classmethod
+    def defaults(cls) -> GitPulseConfig:
+        """A config with no file or environment input. Used by tests and ``--no-config``."""
+        return cls()
 
     # Flat accessors kept so existing callers need no change.
     @property
