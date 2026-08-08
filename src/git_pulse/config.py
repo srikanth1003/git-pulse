@@ -14,7 +14,15 @@ DEFAULT_MODEL = "anthropic/claude-sonnet-4-20250514"
 
 # Retained for backwards compatibility with existing callers and tests.
 DEFAULT_CONFIG: dict[str, Any] = {
-    "llm": {"enabled": False, "model": DEFAULT_MODEL},
+    # ``api_key`` is deliberately absent: a generated config file must never
+    # contain a credential.
+    "llm": {
+        "enabled": False,
+        "model": DEFAULT_MODEL,
+        "timeout_seconds": 60,
+        "max_tokens": 2000,
+        "temperature": 0.2,
+    },
     "analysis": {
         "default_days": 30,
         "max_hotspots": 20,
@@ -29,6 +37,10 @@ DEFAULT_CONFIG: dict[str, Any] = {
 class LLMConfig:
     enabled: bool = False
     model: str = DEFAULT_MODEL
+    api_key: str | None = None
+    timeout_seconds: int = 60
+    max_tokens: int = 2000
+    temperature: float | None = 0.2
 
 
 @dataclass

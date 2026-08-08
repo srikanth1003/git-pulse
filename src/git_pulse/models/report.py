@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
+from git_pulse.analyst.models import Insight
 from git_pulse.models.history import AuthorClass
 from git_pulse.models.results import (
     ChurnResult,
@@ -80,8 +81,10 @@ class Report:
     hotspots: HotspotsResult
     rework: ReworkResult
 
-    # Optional LLM layer (Task 20)
+    # Optional LLM layer — ``narrative`` is the summary text.
     narrative: str | None = None
+    insights: tuple[Insight, ...] = field(default_factory=tuple)
+    actions: tuple[str, ...] = field(default_factory=tuple)
     warnings: tuple[str, ...] = field(default_factory=tuple)
 
     @property

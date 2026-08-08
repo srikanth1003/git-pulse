@@ -119,18 +119,18 @@ def analyze(
         console.print("[dim]Analyzing with LLM...[/dim]")
 
     from git_pulse.analyst.engine import AnalystEngine
+    from git_pulse.config import LLMConfig
 
-    engine = AnalystEngine(model=effective_model)
+    engine = AnalystEngine(LLMConfig(enabled=True, model=effective_model))
 
-    try:
-        analyst_report = engine.analyze(collector_report.to_dict())
-    except Exception as e:
-        console.print(f"[red]LLM analysis failed:[/red] {e}")
+    analyst_report = engine.analyze(collector_report.to_dict())
+    if analyst_report is None:
+        console.print("[red]LLM analysis failed.[/red] See --verbose for collected metrics.")
         if verbose:
             from git_pulse.renderer.terminal import _render_verbose
 
             _render_verbose(console, collector_report)
-        raise typer.Exit(1) from e
+        raise typer.Exit(1)
 
     # Render
     if json_output:

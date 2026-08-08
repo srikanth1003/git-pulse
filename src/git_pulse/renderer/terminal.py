@@ -54,9 +54,9 @@ def render_terminal(
     console.print()
 
     # Top actions
-    if analyst_report.top_actions:
+    if analyst_report.actions:
         console.print("[bold]Top Actions[/bold]")
-        for i, action in enumerate(analyst_report.top_actions, 1):
+        for i, action in enumerate(analyst_report.actions, 1):
             console.print(f"  {i}. {action}")
         console.print()
 

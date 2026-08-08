@@ -57,8 +57,28 @@ def _payload(report: Report) -> dict[str, Any]:
         "velocity": _velocity(report.velocity),
         "sessions": _sessions(report.sessions),
         "hotspots": _hotspots(report.hotspots),
-        "narrative": report.narrative,
+        "narrative": _narrative(report),
         "warnings": list(report.warnings),
+    }
+
+
+def _narrative(report: Report) -> dict[str, Any] | None:
+    """``null`` when no narrative was produced, so consumers can test one key."""
+    if report.narrative is None:
+        return None
+    return {
+        "summary": report.narrative,
+        "insights": [
+            {
+                "title": i.title,
+                "category": i.category,
+                "severity": i.severity,
+                "evidence": list(i.evidence),
+                "recommendation": i.recommendation,
+            }
+            for i in report.insights
+        ],
+        "actions": list(report.actions),
     }
 
 

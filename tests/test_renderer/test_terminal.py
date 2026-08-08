@@ -27,7 +27,7 @@ def make_report():
                 recommendation="Split into sub-routers",
             ),
         ],
-        top_actions=["Define auth interface", "Split router.py", "Add tests for auth"],
+        actions=["Define auth interface", "Split router.py", "Add tests for auth"],
     )
 
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from collections import Counter
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -71,6 +72,38 @@ def build_report(
         hotspots=analyze_hotspots(history, repo, hotspot_params),
         rework=analyze_rework(history),
         warnings=_warnings(history),
+    )
+
+
+def add_narrative(report: Report, config: GitPulseConfig) -> Report:
+    """Attach an LLM narrative if configured. Never raises; degrades to a warning.
+
+    Kept separate from ``build_report`` so the deterministic path stays free of
+    network calls and remains reproducible.
+    """
+    from dataclasses import replace
+
+    from git_pulse.analyst.engine import AnalystEngine, LLMUnavailableError
+    from git_pulse.render.json_output import render_json
+
+    if not config.llm.enabled or report.is_empty:
+        return report
+
+    engine = AnalystEngine(config.llm)
+    try:
+        engine.check_available()
+        result = engine.analyze(json.loads(render_json(report, indent=None)))
+    except LLMUnavailableError as exc:
+        return replace(report, warnings=report.warnings + (str(exc),))
+
+    if result is None:
+        return replace(
+            report,
+            warnings=report.warnings
+            + ("LLM narrative unavailable; deterministic metrics are unaffected.",),
+        )
+    return replace(
+        report, narrative=result.summary, insights=result.insights, actions=result.actions
     )
 
 

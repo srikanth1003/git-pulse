@@ -20,6 +20,8 @@ _CLASS_STYLE = {
     AuthorClass.HUMAN: "green",
 }
 
+_SEVERITY_STYLE = {"high": "red", "medium": "yellow", "low": "cyan", "info": "dim"}
+
 
 def render_terminal(report: Report, *, console: Console | None = None) -> None:
     console = console or Console()
@@ -165,8 +167,25 @@ def _hotspots(report: Report, console: Console) -> None:
 
 
 def _narrative(report: Report, console: Console) -> None:
-    if report.narrative:
-        console.print(Panel(report.narrative, title="Narrative", title_align="left"))
+    if not report.narrative:
+        return
+    console.print(Panel(report.narrative, title="Narrative", title_align="left"))
+
+    for insight in report.insights:
+        style = _SEVERITY_STYLE.get(insight.severity, "dim")
+        console.print(
+            f"  [{style}]● {insight.severity}[/{style}]  "
+            f"[bold]{insight.title}[/bold] [dim]({insight.category})[/dim]"
+        )
+        for line in insight.evidence:
+            console.print(f"      [dim]evidence:[/dim] {line}")
+        if insight.recommendation:
+            console.print(f"      [dim]→[/dim] {insight.recommendation}")
+
+    if report.actions:
+        console.print("\n[bold]Next steps[/bold]")
+        for n, action in enumerate(report.actions, 1):
+            console.print(f"  {n}. {action}")
 
 
 def _warnings(report: Report, console: Console) -> None:

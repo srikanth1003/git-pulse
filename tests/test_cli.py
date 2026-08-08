@@ -1,3 +1,4 @@
+import os
 import subprocess
 from unittest.mock import MagicMock, patch
 
@@ -49,8 +50,12 @@ def test_analyze_runs_pipeline(tmp_path):
 
     mock_response = MagicMock()
     mock_response.choices = [MagicMock()]
-    mock_response.choices[0].message.content = '{"summary":"Test","insights":[],"top_actions":[]}'
+    mock_response.choices[0].message.content = '{"summary":"Test","insights":[],"actions":[]}'
 
-    with patch("git_pulse.analyst.engine.completion", return_value=mock_response):
+    # The engine now refuses to call a provider without a key, so supply one.
+    with (
+        patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key"}),
+        patch("git_pulse.analyst.engine._completion", return_value=lambda **kw: mock_response),
+    ):
         result = runner.invoke(app, ["analyze", str(repo), "--days", "1"])
         assert result.exit_code == 0

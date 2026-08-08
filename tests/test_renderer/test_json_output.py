@@ -16,10 +16,10 @@ def test_render_json():
                 recommendation="fix it",
             )
         ],
-        top_actions=["action1"],
+        actions=["action1"],
     )
     output = render_json(report)
     data = json.loads(output)
     assert data["summary"] == "Test"
     assert len(data["insights"]) == 1
-    assert data["top_actions"] == ["action1"]
+    assert data["actions"] == ["action1"]
