@@ -30,6 +30,12 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "hotspot_region_lines": 25,
         "exclude": [],
     },
+    "attribution": {
+        "agent_threshold": 0.70,
+        "human_threshold": 0.30,
+        "enable_cadence_heuristic": False,
+    },
+    "sessions": {"gap_minutes": 90},
 }
 
 

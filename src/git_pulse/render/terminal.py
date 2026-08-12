@@ -7,6 +7,7 @@ Every section guards against an empty report rather than assuming data exists.
 from __future__ import annotations
 
 from rich.console import Console
+from rich.markup import escape
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
@@ -49,7 +50,8 @@ def _header(report: Report, console: Console) -> None:
     console.print(
         Panel(
             Text.from_markup(
-                f"[bold]{report.repo_name}[/bold]  ·  branch [cyan]{report.branch}[/cyan]"
+                f"[bold]{escape(report.repo_name)}[/bold]  ·  "
+                f"branch [cyan]{escape(report.branch)}[/cyan]"
                 f"  ·  {report.head_sha[:8]}{span}"
             ),
             title="git-pulse",
@@ -75,7 +77,8 @@ def _attribution(report: Report, console: Console) -> None:
     table.add_row("Agent lines added", f"{a.agent_lines_added} ({_pct(a.agent_line_share)})")
     if a.providers_seen:
         table.add_row(
-            "Providers", ", ".join(f"{k} ({v})" for k, v in sorted(a.providers_seen.items()))
+            "Providers",
+            ", ".join(f"{escape(k)} ({v})" for k, v in sorted(a.providers_seen.items())),
         )
     console.print(table)
 
@@ -87,7 +90,7 @@ def _attribution(report: Report, console: Console) -> None:
         authors.add_column("+/-", justify="right")
         for author in a.authors[:10]:
             authors.add_row(
-                author.name,
+                escape(author.name),
                 # ``.get`` because an unclassified author must not crash the render.
                 Text(
                     author.author_class.value, style=_CLASS_STYLE.get(author.author_class, "white")
@@ -107,7 +110,7 @@ def _churn(report: Report, console: Console) -> None:
     table.add_column("Churn", justify="right")
     table.add_column("Agent", justify="right")
     for f in report.churn.files:
-        table.add_row(f.path, str(f.commits), str(f.churn), _pct(f.agent_share))
+        table.add_row(escape(f.path), str(f.commits), str(f.churn), _pct(f.agent_share))
     console.print(table)
     console.print(
         f"  Rework (file-level): {report.rework.file_rework_rate * 100:.0f}% of churn "
@@ -158,7 +161,7 @@ def _hotspots(report: Report, console: Console) -> None:
     table.add_column("Pattern")
     for h in report.hotspots.hotspots:
         table.add_row(
-            f"{h.file_path}:{h.line_start}-{h.line_end}",
+            f"{escape(h.file_path)}:{h.line_start}-{h.line_end}",
             str(h.modification_count),
             f"{h.time_span_hours:.1f}h",
             h.classification,
@@ -169,25 +172,25 @@ def _hotspots(report: Report, console: Console) -> None:
 def _narrative(report: Report, console: Console) -> None:
     if not report.narrative:
         return
-    console.print(Panel(report.narrative, title="Narrative", title_align="left"))
+    console.print(Panel(Text(report.narrative), title="Narrative", title_align="left"))
 
     for insight in report.insights:
         style = _SEVERITY_STYLE.get(insight.severity, "dim")
         console.print(
             f"  [{style}]● {insight.severity}[/{style}]  "
-            f"[bold]{insight.title}[/bold] [dim]({insight.category})[/dim]"
+            f"[bold]{escape(insight.title)}[/bold] [dim]({escape(insight.category)})[/dim]"
         )
         for line in insight.evidence:
-            console.print(f"      [dim]evidence:[/dim] {line}")
+            console.print(f"      [dim]evidence:[/dim] {escape(line)}")
         if insight.recommendation:
-            console.print(f"      [dim]→[/dim] {insight.recommendation}")
+            console.print(f"      [dim]→[/dim] {escape(insight.recommendation)}")
 
     if report.actions:
         console.print("\n[bold]Next steps[/bold]")
         for n, action in enumerate(report.actions, 1):
-            console.print(f"  {n}. {action}")
+            console.print(f"  {n}. {escape(action)}")
 
 
 def _warnings(report: Report, console: Console) -> None:
     for warning in report.warnings:
-        console.print(f"[yellow]warning:[/yellow] {warning}")
+        console.print(f"[yellow]warning:[/yellow] {escape(warning)}")

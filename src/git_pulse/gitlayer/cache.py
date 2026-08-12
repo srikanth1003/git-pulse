@@ -43,9 +43,13 @@ class HistoryCache:
     Nothing is ever written inside ``.git``.
     """
 
-    def __init__(self, repo_root: Path | str, enabled: bool = True) -> None:
+    def __init__(
+        self, repo_root: Path | str, enabled: bool = True, *, write_only: bool = False
+    ) -> None:
         self.repo_root = Path(repo_root)
         self.enabled = enabled
+        # ``--refresh``: recompute, then overwrite whatever was there.
+        self.write_only = write_only
         digest = hashlib.sha256(str(self.repo_root.resolve()).encode()).hexdigest()[:16]
         self.directory = cache_root() / digest
 
@@ -61,7 +65,7 @@ class HistoryCache:
         return self.directory / f"{key}.json.gz"
 
     def load(self, key: str) -> History | None:
-        if not self.enabled:
+        if not self.enabled or self.write_only:
             return None
         path = self.path_for(key)
         if not path.exists():
@@ -106,6 +110,35 @@ class HistoryCache:
             entries=len(paths),
             bytes=sum(p.stat().st_size for p in paths),
         )
+
+
+def global_info(root: Path | None = None) -> CacheInfo:
+    """Aggregate stats across every repository's cache.
+
+    ``HistoryCache.info`` is per-repository; ``git-pulse cache info`` is run from
+    anywhere and must describe the whole cache, so it walks the root instead.
+    """
+    directory = root or cache_root()
+    if not directory.exists():
+        return CacheInfo(directory=directory, entries=0, bytes=0)
+    paths = list(directory.rglob("*.json.gz"))
+    return CacheInfo(
+        directory=directory,
+        entries=len(paths),
+        bytes=sum(p.stat().st_size for p in paths),
+    )
+
+
+def clear_all(root: Path | None = None) -> int:
+    """Delete every cached entry for every repository. Returns the count removed."""
+    directory = root or cache_root()
+    if not directory.exists():
+        return 0
+    removed = 0
+    for path in directory.rglob("*.json.gz"):
+        path.unlink()
+        removed += 1
+    return removed
 
 
 def _encode_history(history: History) -> dict[str, Any]:

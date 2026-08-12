@@ -2,7 +2,13 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from git_pulse.gitlayer.cache import CACHE_SCHEMA_VERSION, HistoryCache, cache_root
+from git_pulse.gitlayer.cache import (
+    CACHE_SCHEMA_VERSION,
+    HistoryCache,
+    cache_root,
+    clear_all,
+    global_info,
+)
 from git_pulse.models.history import (
     Attribution,
     AttributionSignal,
@@ -168,3 +174,43 @@ def test_separate_repos_do_not_share_entries(tmp_path, monkeypatch):
     one.store(key, _history())
 
     assert two.load(two.key(head_sha="abc", branch="main", options={})) is None
+
+
+def test_write_only_cache_never_reads_but_still_writes(tmp_path, monkeypatch):
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
+    cache = HistoryCache(tmp_path / "repo", write_only=True)
+    key = cache.key(head_sha="abc", branch="main", options={})
+
+    cache.store(key, _history())
+
+    assert cache.load(key) is None
+    assert HistoryCache(tmp_path / "repo").load(key) is not None
+
+
+def test_global_info_aggregates_across_repositories(tmp_path, monkeypatch):
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
+    for name in ("repo-one", "repo-two"):
+        cache = HistoryCache(tmp_path / name)
+        cache.store(cache.key(head_sha="a", branch="main", options={}), _history())
+
+    info = global_info()
+
+    assert info.entries == 2
+    assert info.bytes > 0
+
+
+def test_clear_all_empties_every_repository(tmp_path, monkeypatch):
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
+    for name in ("repo-one", "repo-two"):
+        cache = HistoryCache(tmp_path / name)
+        cache.store(cache.key(head_sha="a", branch="main", options={}), _history())
+
+    assert clear_all() == 2
+    assert global_info().entries == 0
+
+
+def test_global_info_on_a_missing_root_reports_zero(tmp_path, monkeypatch):
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path / "nothing-here"))
+
+    assert global_info().entries == 0
+    assert clear_all() == 0

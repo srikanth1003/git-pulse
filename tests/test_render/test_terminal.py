@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 import pytest
 from rich.console import Console
 
+from git_pulse.analyst.models import Insight
 from git_pulse.config import GitPulseConfig
 from git_pulse.render.terminal import render_terminal
 from git_pulse.report.builder import build_report
@@ -91,3 +92,37 @@ def test_long_paths_do_not_break_rendering(tmp_path):
     b.write(deep, "x\n").commit("deep")
 
     assert "file.py" in _text(build_report(b.path, GitPulseConfig.defaults(), now=NOW))
+
+
+def test_bracketed_text_in_data_is_not_parsed_as_rich_markup(report):
+    """Rich reads ``[...]`` as a style tag, so every data-derived string is escaped.
+
+    The real trigger was the LLM warning that mentions the ``[llm]`` config
+    section, which raised at render time before the strings were escaped.
+    """
+    warning = "No API key found. Set ANTHROPIC_API_KEY or [llm] api_key in your config."
+    out = _text(replace(report, warnings=(warning,)))
+
+    assert "[llm] api_key" in out
+
+
+def test_bracketed_narrative_and_insights_render_verbatim(report):
+    insight = Insight(
+        title="Agent rewrote [core] modules",
+        category="[risk]",
+        severity="high",
+        evidence=("app.py churn is 40 lines in [2] commits",),
+        recommendation="Review [core] by hand",
+    )
+    out = _text(
+        replace(
+            report,
+            narrative="Most changes landed in [core].",
+            insights=(insight,),
+            actions=("Audit [core] ownership",),
+        )
+    )
+
+    assert "[core] modules" in out
+    assert "[risk]" in out
+    assert "Audit [core] ownership" in out
