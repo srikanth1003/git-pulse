@@ -27,8 +27,14 @@ env/
 # Generated reports
 *-report.json
 
-# Internal dev docs
+# Internal dev docs and working notes
 docs/superpowers/
+docs/status.md
 
 # hatch-vcs generated
 src/git_pulse/_version.py
+
+# Local tooling and the HTML sources it renders. Neither is distributed;
+# regenerate docs/images locally with scripts/capture_docs_images.py.
+docs/mocks/
+scripts/

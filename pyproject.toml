@@ -53,6 +53,9 @@ dev = [
     "ruff>=0.6.0",
     "mypy>=1.11.0",
 ]
+# Only needed to regenerate the README figures: playwright pulls a browser
+# binary, so it stays out of dev and out of CI.
+docs = ["playwright>=1.40"]
 
 [project.urls]
 Homepage = "https://github.com/srikanth1003/git-pulse"
@@ -70,6 +73,12 @@ version-file = "src/git_pulse/_version.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/git_pulse"]
+
+[tool.hatch.build.targets.sdist]
+# The README loads its figures from GitHub raw URLs, so shipping ~1.4 MB of PNGs
+# in every sdist buys nothing. docs/mocks stays in: it is the source the capture
+# script renders from.
+exclude = ["docs/images"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -31,6 +31,126 @@ git-pulse reads your git history and produces actionable insights across five ca
 
 git-pulse auto-detects coding agent attribution from commit metadata — `Co-Authored-By: Claude`, `[copilot]`, `aider:` tags, and more. When agent commits are found, it provides **prompt guidance** with realistic bad/better prompt examples showing exactly what to change in how you talk to your agent.
 
+Every signal carries a weight, and a commit's score is the highest weight it matched — so a classification is always traceable to the line of metadata that caused it.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/srikanth1003/git-pulse/main/docs/images/attribution-dark.png">
+  <img alt="43.9% of 376 commits carry a coding-agent signature: 165 agent commits adding 2,574 lines against 211 human commits adding 4,707" src="https://raw.githubusercontent.com/srikanth1003/git-pulse/main/docs/images/attribution-light.png" width="840">
+</picture>
+
+<details>
+<summary>Same figure as text</summary>
+
+```
+Agent-authored share — 43.9% of 376 commits carry a coding-agent signature
+
+  agent    165 commits    2,574 lines added
+  human    211 commits    4,707 lines added
+
+  signal            weight   matches   provider
+  coauthor_trailer    0.95        48   Claude Code
+  bot_identity        0.90        96   GitHub Copilot
+  aider_prefix        0.90        34   aider
+  bracket_tag         0.85        35   Cursor
+```
+
+`matches` counts signal instances, not commits — `bot_identity` fires on both the
+author and the committer field, so 96 matches is 48 commits.
+
+</details>
+
+### Churn, ranked
+
+Insertions plus deletions per file. Churn on its own is not a defect signal, but it
+tells you which files the next question is about.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/srikanth1003/git-pulse/main/docs/images/churn-dark.png">
+  <img alt="orders.py churns most at 1,735 lines, ahead of routes.py at 1,467 and pricing.py at 1,406" src="https://raw.githubusercontent.com/srikanth1003/git-pulse/main/docs/images/churn-light.png" width="840">
+</picture>
+
+<details>
+<summary>Same figure as text</summary>
+
+```
+Top files by churn (insertions + deletions, 120 days)
+
+  src/shipyard/core/orders.py       1,735
+  src/shipyard/api/routes.py        1,467
+  src/shipyard/core/pricing.py      1,406
+  src/shipyard/api/auth.py          1,167
+  src/shipyard/core/scheduling.py   1,042
+  src/shipyard/db/models.py           953
+  tests/test_orders.py                886
+  tests/test_pricing.py               803
+```
+
+Agent share of that churn runs 30–47% per file, so no single file is agent-only.
+
+</details>
+
+### Velocity over time
+
+Commits per day across the window, with the peak and the last day labelled — enough
+to see whether the work is steady or arrives in bursts.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/srikanth1003/git-pulse/main/docs/images/velocity-dark.png">
+  <img alt="Commits per day across 92 active days of 120, averaging 3.13 and peaking at 12 on 2026-04-12" src="https://raw.githubusercontent.com/srikanth1003/git-pulse/main/docs/images/velocity-light.png" width="840">
+</picture>
+
+<details>
+<summary>Same figure as text</summary>
+
+```
+Commit velocity — 376 commits over 120 days
+
+  active days        92 of 120
+  commits per day    3.13
+  files per commit   1.62
+  peak               12 commits on 2026-04-12
+  last day            3 commits on 2026-05-05
+```
+
+</details>
+
+### Spatiotemporal hotspots
+
+A hotspot is a cluster of edits close together in *both* line position and time. The
+classification says who touched the region and in what order, which is the part that
+tells you whether an agent is being reworked or is doing the reworking.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/srikanth1003/git-pulse/main/docs/images/hotspots-dark.png">
+  <img alt="Seven highest-scoring hotspots of 229: six are agent-reworked and one is human-fixing-agent, each 4 to 6 edits inside a 1 to 4 hour window" src="https://raw.githubusercontent.com/srikanth1003/git-pulse/main/docs/images/hotspots-light.png" width="840">
+</picture>
+
+<details>
+<summary>Same figure as text</summary>
+
+```
+Spatiotemporal hotspots — 229 detected, seven highest-scoring shown
+
+  location                              edits  span  agent/human  score  pattern
+  src/shipyard/core/pricing.py:51-75        6  3.9h        3 / 3    7.4  agent-reworked
+  src/shipyard/core/scheduling.py:55-71     4  1.2h        2 / 2    7.3  human-fixing-agent
+  src/shipyard/core/pricing.py:151-160      5  2.5h        3 / 2    7.1  agent-reworked
+  src/shipyard/db/models.py:26-50           6  4.1h        3 / 3    7.0  agent-reworked
+  src/shipyard/db/models.py:51-75           6  4.1h        3 / 3    7.0  agent-reworked
+  src/shipyard/core/orders.py:82-100        5  2.7h        3 / 2    6.7  agent-reworked
+  tests/test_pricing.py:10-25               5  3.0h        3 / 2    6.3  agent-reworked
+```
+
+Score is `edits² ÷ (1 + hours)`. `human-fixing-agent` means a human touched the
+region last; `agent-reworked` means an agent did.
+
+</details>
+
+> **About the numbers in these figures.** git-pulse's own history is entirely
+> human-authored, so it cannot demonstrate agent attribution. Every figure above is a
+> real `git-pulse analyze` run against a synthetic repository built with a fixed
+> seed, so the numbers are reproducible rather than illustrative.
+
 ## Install
 
 ```bash
@@ -66,55 +186,49 @@ git-pulse analyze . --verbose
 
 ## Example Output
 
+`git-pulse analyze` prints attribution, authors, churn, velocity, sessions, and
+hotspots. No API key is involved in any of it — this is git metadata, counted.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/srikanth1003/git-pulse/main/docs/images/report-dark.png">
+  <img alt="Terminal output: a header with repository, branch, date range and 376 commits, an attribution table showing 165 agent commits and four detected providers, and an authors table classifying each of six authors as agent or human" src="https://raw.githubusercontent.com/srikanth1003/git-pulse/main/docs/images/report-light.png" width="840">
+</picture>
+
+<details>
+<summary>Same output as text</summary>
+
 ```
-────────────────────────────────────────────────────────────────────────────────
- Git-Pulse Report — my-project (main)
- 19 days · 100 commits · 242 files changed
-────────────────────────────────────────────────────────────────────────────────
-
-╭────────────────────────────────── Summary ───────────────────────────────────╮
-│ Repository shows intensive development with 100 commits across 242 files.   │
-│ High rework rate (40%) suggests agent prompts need improvement, with        │
-│ multiple iterations on workflow configuration and model updates.             │
-╰──────────────────────────────────────────────────────────────────────────────╯
-
-Top Actions
-  1. Create design documents before implementing GitHub Actions workflows
-  2. Establish centralized model configuration to reduce scattered updates
-  3. Improve agent prompts with dependency analysis before changes
-
-───────────────────────  Rework Reduction (2 insights)  ────────────────────────
-
-  [HIGH] GitHub Workflows Churning Through Multiple Iterations
-    .github/workflows/deploy.yml modified 9 times in 2.4 hours
-    Same file tweaked for permissions, triggers, and comments repeatedly
-  → Plan workflow requirements upfront. Create a design doc specifying trigger
-  events, permissions, and behavior before coding.
-
-────────────────────────  Prompt Guidance (1 insight)  ────────────────────────
-
-  [HIGH] Workflow Configuration Requires Context and Constraints
-    PROBLEM: Developer asked agent to 'create GitHub workflow' without
-    specifying security constraints or existing patterns.
-
-    BAD PROMPT EXAMPLE:
-  ╭──────────────────────────────────────────────────────────────────────────╮
-  │  Create a GitHub workflow that runs tests automatically.                 │
-  ╰──────────────────────────────────────────────────────────────────────────╯
-
-    BETTER PROMPT EXAMPLE:
-  ╭──────────────────────────────────────────────────────────────────────────╮
-  │  Create a GitHub workflow for CI. Before you start, look at our         │
-  │  existing .github/workflows/ to understand our patterns for             │
-  │  permissions and triggers. Use contents:read permission. Follow the     │
-  │  same job naming pattern as deploy.yml. If you're unsure about which    │
-  │  events to use, ask me rather than guessing.                            │
-  ╰──────────────────────────────────────────────────────────────────────────╯
-
-    WHY THIS WORKS: Points to existing workflows to learn patterns, sets
-    explicit security constraints, and prevents the agent from making
-    permission guesses that need rework.
+$ git-pulse analyze ~/src/shipyard --days 120
+╭───────────────── git-pulse ─────────────────╮
+│ git-pulse-demo  ·  branch main  ·  55b89860 │
+│ 2026-01-06 → 2026-05-05  ·  376 commits     │
+╰───── v0.1.1.dev24+g86dac6cf1.d20260823 ─────╯
+Attribution
+┏━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Metric            ┃                                                          Value ┃
+┡━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ Agent commits     │                                                      165 (44%) │
+│ Mixed commits     │                                                              0 │
+│ Human commits     │                                                            211 │
+│ Agent lines added │                                                     2574 (35%) │
+│ Providers         │ Claude Code (48), Cursor (35), GitHub Copilot (48), aider (34) │
+└───────────────────┴────────────────────────────────────────────────────────────────┘
+Authors
+┏━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━┓
+┃ Author                 ┃ Class ┃ Commits ┃         +/- ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━┩
+│ Dana Whitfield         │ agent │      89 │  +2581/-955 │
+│ Ravi Menon             │ agent │      83 │ +1386/-1046 │
+│ Lena Osei              │ agent │      73 │  +1319/-943 │
+│ copilot-swe-agent[bot] │ agent │      48 │   +702/-528 │
+│ Tomas Brandt           │ human │      42 │   +662/-493 │
+│ Priya Raman            │ human │      41 │   +631/-451 │
+└────────────────────────┴───────┴─────────┴─────────────┘
 ```
+
+Churn, velocity, session, and hotspot tables follow; they are shown as figures above.
+
+</details>
 
 ## LLM Provider Setup
 
@@ -183,13 +297,33 @@ Options:
 
 git-pulse has a two-layer architecture:
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/srikanth1003/git-pulse/main/docs/images/architecture-dark.png">
+  <img alt="Layer diagram: cli imports report, report imports analysis, analysis imports gitlayer, gitlayer shells out to git; attribution, models, render, and the optional LLM analyst are shared by every layer above" src="https://raw.githubusercontent.com/srikanth1003/git-pulse/main/docs/images/architecture-light.png" width="840">
+</picture>
+
+<details>
+<summary>Same diagram as text</summary>
+
 ```
-Git History ──► Collector Layer ──► Structured Report ──► Analyst (LLM) ──► Insights
-                  │                                          │
-                  ├─ GitHistoryCollector                      ├─ LiteLLM (any provider)
-                  ├─ HotspotDetector (spatiotemporal)         └─ Categorized insights
-                  └─ MetricsCalculator
+cli         analyze · cache · config · version
+ ↓
+report      builds one immutable Report value
+ ↓
+analysis    churn · velocity · sessions · hotspots
+ ↓
+gitlayer    git plumbing · history cache
+ ↓
+git         log · numstat · notes
+
+shared by every layer above:
+  attribution   signals · providers
+  models        typed history & report
+  render        terminal · JSON v1
+  analyst       optional LLM narrative  ← the only part that needs an API key
 ```
+
+</details>
 
 **Collector Layer** (deterministic, no LLM):
 - Walks git history, extracts diffs, detects agent attribution
