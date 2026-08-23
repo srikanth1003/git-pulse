@@ -9,29 +9,35 @@
 [![Release](https://img.shields.io/github/v/tag/srikanth1003/git-pulse?label=release&sort=semver)](https://github.com/srikanth1003/git-pulse/tags)
 [![Last commit](https://img.shields.io/github/last-commit/srikanth1003/git-pulse)](https://github.com/srikanth1003/git-pulse/commits/main)
 
-**Analyze git repository history for development hotspots and get LLM-powered insights to optimize your workflow.**
+**Measure how much of your codebase your AI coding agents actually wrote — and what it cost you in rework.**
 
 > Installed from PyPI as [`gitpulse-ai`](https://pypi.org/project/gitpulse-ai/); the command is `git-pulse`.
 
-git-pulse examines your commit history to find rework patterns, codebase health issues, and — when coding agents are detected — specific prompt engineering guidance to reduce wasted iterations. It works on any git repo, with any LLM provider.
+git-pulse reads your commit history and reports agent-versus-human attribution, per-file churn, rework rates, work sessions, and the places where edits pile up in the same lines within hours of each other. It works on any git repo, runs entirely offline, and needs no API key.
 
 ## What It Does
 
-git-pulse reads your git history and produces actionable insights across five categories:
+git-pulse reads your git history and measures how much of it was written by AI
+coding agents versus humans — then measures what that code cost you in rework,
+churn, and repeated edits to the same lines.
 
-| Category | What It Finds |
+| Measurement | What you get |
 |----------|--------------|
-| **Rework Reduction** | Files rewritten multiple times — what went wrong and how to get it right faster |
-| **Codebase Health** | Chronic hotspots, architectural issues causing repeated churn |
-| **Prompt Guidance** | Specific before/after prompt examples when coding agents are detected (Co-Authored-By, aider tags, etc.) |
-| **Agent Effectiveness** | How well agents are being utilized — where they struggle or excel |
-| **Workflow Optimization** | Session patterns, productivity signals, process improvements |
+| **Attribution** | Every commit scored as human, mixed, or agent, with the signal that decided it and the provider it came from |
+| **Churn** | Insertions and deletions per file, with the agent share of each file's churn |
+| **Rework** | How often files come back for another edit, split by agent and human |
+| **Velocity** | Commits per day, active days, files per commit, and the peak day |
+| **Sessions** | Work clustered per author by commit gap, so two people committing in the same hour aren't merged |
+| **Hotspots** | Edits close in both line position *and* time, classified by who touched the region last |
+
+Everything above runs locally with no API key and no network access. Pass `--llm`
+to add an interpretive narrative on top.
 
 ### Agent-Aware Analysis
 
-git-pulse auto-detects coding agent attribution from commit metadata — `Co-Authored-By: Claude`, `[copilot]`, `aider:` tags, and more. When agent commits are found, it provides **prompt guidance** with realistic bad/better prompt examples showing exactly what to change in how you talk to your agent.
+git-pulse detects coding-agent attribution from commit metadata alone — `Co-Authored-By: Claude`, the `copilot-swe-agent[bot]` identity, `[cursor]` subject tags, `aider:` prefixes, `Generated-by` trailers, and git notes — across 11 providers: Claude Code, GitHub Copilot, Cursor, aider, OpenAI Codex, Devin, Windsurf, Sourcegraph Cody, Continue, Sweep, and gpt-engineer.
 
-Every signal carries a weight, and a commit's score is the highest weight it matched — so a classification is always traceable to the line of metadata that caused it.
+Every signal carries a weight, and a commit's score is the highest weight it matched — so a classification is always traceable to the one line of metadata that caused it. Nothing is inferred from the diff, and nothing is guessed.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/srikanth1003/git-pulse/main/docs/images/attribution-dark.png">
@@ -162,26 +168,30 @@ Requires Python 3.11+. The installed command is `git-pulse`.
 ## Quick Start
 
 ```bash
-# Analyze current repo (last 30 days)
-git-pulse analyze .
+# Analyze the current repo (last 30 days) — no API key required
+git-pulse analyze
 
-# Analyze a specific repo, last 14 days
+# A specific repo, last 14 days
 git-pulse analyze /path/to/repo --days 14
 
-# Last 50 commits only
-git-pulse analyze . --commits 50
+# Last 50 commits, or an explicit date range
+git-pulse analyze --commits 50
+git-pulse analyze --since 2026-01-01 --until 2026-03-31
 
-# JSON output
-git-pulse analyze . --json
+# JSON output, for CI or further processing
+git-pulse analyze --json
+git-pulse analyze --output report.json
 
-# Save report to file
-git-pulse analyze . --output report.json
+# Add an LLM narrative (requires a provider key)
+export ANTHROPIC_API_KEY=sk-...
+git-pulse analyze --llm
 
-# Use a specific model
-git-pulse analyze . --model openai/gpt-4o
+# Scaffold a config file
+git-pulse config init
 
-# Show raw collector metrics alongside LLM insights
-git-pulse analyze . --verbose
+# Inspect or clear the history cache
+git-pulse cache info
+git-pulse cache clear
 ```
 
 ## Example Output
@@ -230,25 +240,35 @@ Churn, velocity, session, and hotspot tables follow; they are shown as figures a
 
 </details>
 
-## LLM Provider Setup
+## Optional: LLM Narrative
+
+Every metric git-pulse reports is computed locally. The `--llm` flag adds a
+written interpretation on top, and only that flag needs a provider key. If the
+call fails or no key is set, git-pulse prints a warning and the metrics are
+unaffected.
 
 git-pulse uses [LiteLLM](https://docs.litellm.ai/) under the hood, so it works with 100+ LLM providers out of the box. Set the appropriate environment variable for your provider:
 
 ```bash
 # Anthropic (default model: claude-sonnet-4-20250514)
 export ANTHROPIC_API_KEY=sk-ant-...
+git-pulse analyze --llm
 
 # OpenAI
 export OPENAI_API_KEY=sk-...
-git-pulse analyze . --model openai/gpt-4o
+git-pulse analyze --llm --model openai/gpt-4o
 
 # AWS Bedrock
 export AWS_PROFILE=my-profile
-git-pulse analyze . --model bedrock/us.anthropic.claude-sonnet-4-20250514-v1:0
+git-pulse analyze --llm --model bedrock/us.anthropic.claude-sonnet-4-20250514-v1:0
 
 # Any LiteLLM-supported provider
-git-pulse analyze . --model <provider>/<model-id>
+git-pulse analyze --llm --model <provider>/<model-id>
 ```
+
+There is deliberately no key auto-detection: `git-pulse analyze` must produce the
+same output on a laptop with keys in the environment as it does in CI without
+them.
 
 ## Configuration
 
@@ -259,43 +279,102 @@ git-pulse looks for TOML config files in this order:
 3. `~/.config/gitpulse/config.toml`
 4. Built-in defaults
 
+Run `git-pulse config init` to write a commented starter file, or
+`git-pulse config show` to print the effective configuration and where each
+section came from.
+
 Example `.gitpulse.toml`:
 
 ```toml
-[llm]
-model = "anthropic/claude-sonnet-4-20250514"
-
 [analysis]
 default_days = 30
 max_hotspots = 20
 exclude = ["*.lock", "package-lock.json", "*.generated.*"]
+
+[sessions]
+# Commits by the same author closer together than this belong to one session.
+# 0.1.0 used 30, which split a session on any coffee break.
+gap_minutes = 90
+
+[llm]
+# Equivalent to passing --llm on every run. Off by default.
+enabled = false
+model = "anthropic/claude-sonnet-4-20250514"
 ```
 
 ## CLI Options
 
+Pasted from `--help`, so it cannot drift from the code. `--include` and
+`--exclude` are repeatable.
+
 ```
-git-pulse analyze [PATH] [OPTIONS]
+$ git-pulse --help
 
-Arguments:
-  PATH                  Path to a git repository [default: .]
+ Usage: git-pulse [OPTIONS] COMMAND [ARGS]...
 
-Options:
-  --days INTEGER        Analyze last N days of history
-  --commits INTEGER     Analyze last N commits
-  --branch TEXT         Branch to analyze (default: current)
-  --include TEXT        Only analyze files matching glob (repeatable)
-  --exclude TEXT        Skip files matching glob (repeatable)
-  --max-hotspots INT    Max hotspots to send to LLM
-  --model TEXT          LiteLLM model string
-  --json                Output JSON instead of rich terminal
-  --output TEXT         Write report to file
-  --verbose             Show raw collector metrics
-  --config TEXT         Path to config file
+ Measure how much of your git history was written by AI agents, and what it cost.
+
+ Commands:
+   analyze  Analyze a repository's history and report agent vs. human contribution.
+   version  Show the installed version.
+   cache    Inspect or clear the history cache.
+   config   Show or scaffold configuration.
+```
+
+```
+$ git-pulse analyze --help
+
+ Usage: git-pulse analyze [OPTIONS] [PATH]
+
+ Analyze a repository's history and report agent vs. human contribution.
+
+ Runs entirely offline by default; --llm adds an interpretive narrative.
+
+ Arguments:
+   path                       [PATH]   Path to a git repository. [default: .]
+
+ Options:
+   --days                     INTEGER  Analyze the last N days.
+   --commits                  INTEGER  Analyze the last N commits.
+   --since                    TEXT     Analyze commits after this date (ISO 8601).
+   --until                    TEXT     Analyze commits before this date.
+   --branch                   TEXT     Branch to analyze (default: current).
+   --include                  TEXT     Only files matching this glob.
+   --exclude                  TEXT     Skip files matching this glob.
+   --include-merges                    Include merge commits. [default: no]
+   --max-hotspots             INTEGER  Maximum hotspots to report.
+   --llm                               Add an LLM narrative (needs an API key).
+   --model                    TEXT     LiteLLM model string, e.g. gpt-4o-mini.
+   --json                              Emit JSON on stdout.
+   --output                   TEXT     Also write the JSON report to this file.
+   --no-cache                          Bypass the history cache.
+   --refresh                           Recompute and overwrite the cache.
+   --config                   TEXT     Path to a config file.
+```
+
+```
+$ git-pulse cache --help
+
+ Usage: git-pulse cache [OPTIONS] COMMAND [ARGS]...
+
+ Commands:
+   info   Show cache location, entry count, and size.
+   clear  Delete every cached history entry.
+
+$ git-pulse config --help
+
+ Usage: git-pulse config [OPTIONS] COMMAND [ARGS]...
+
+ Commands:
+   show  Print the effective configuration and where each section came from.
+   init  Write a commented configuration file.
 ```
 
 ## How It Works
 
-git-pulse has a two-layer architecture:
+`gitlayer` collects and caches history → `attribution` scores each commit →
+`analysis` computes churn, rework, velocity, sessions, and hotspots → `render`
+emits terminal output or JSON → an optional `analyst` narrative sits on top.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/srikanth1003/git-pulse/main/docs/images/architecture-dark.png">
@@ -325,15 +404,20 @@ shared by every layer above:
 
 </details>
 
-**Collector Layer** (deterministic, no LLM):
-- Walks git history, extracts diffs, detects agent attribution
-- Clusters modifications by file + spatial/temporal proximity into hotspots
-- Computes metrics: file churn, change velocity, rework rate, session analysis
+**Deterministic layer** (no LLM, no network):
+- `gitlayer` reads history through `git log --numstat -z` and unified-diff parsing, and caches the result on disk keyed by HEAD and the collection options
+- `attribution` scores each commit against 11 provider signatures — trailers, bot identities, subject prefixes, message markers, and git notes — and records which signal matched
+- `analysis` computes per-file churn and agent share, file rework rates, velocity, per-author work sessions, and spatiotemporal hotspots
+- `render` emits the rich terminal report or versioned JSON
 
-**Analyst Layer** (LLM-powered):
-- Receives the structured collector report
-- Produces categorized insights with evidence and recommendations
-- Generates specific prompt guidance when agent attribution is detected
+**Optional analyst layer** (`--llm`):
+- Receives the same JSON a user gets from `--json`, minus the per-day series, raw SHAs, and any narrative from an earlier run — a model must not launder its own prior output back in as evidence
+- Returns a summary, categorised insights with evidence and a recommendation, and up to three prioritised actions
+- Every failure path degrades to a warning; the metrics are never affected
+
+A `Report` is a pure value. Renderers never hold a repository handle, so a report
+can be serialised, cached, or diffed long after the checkout is gone. The JSON
+shape is a versioned contract — see [docs/json-schema.md](docs/json-schema.md).
 
 ## Releases & Downloads
 
