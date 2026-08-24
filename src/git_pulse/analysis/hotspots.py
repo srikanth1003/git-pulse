@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 
-from git_pulse.gitlayer.diff import parse_unified_diff
+from git_pulse.gitlayer.patches import PatchIndex, collect_patches, most_touched_paths
 from git_pulse.gitlayer.repo import GitRepo
 from git_pulse.models.history import AuthorClass, History
 from git_pulse.models.results import Hotspot, HotspotsResult
@@ -15,8 +15,6 @@ CLASSIFICATIONS = (
     "human-iteration",
     "unknown",
 )
-
-_SENTINEL = "\x1e"
 
 
 @dataclass(frozen=True)
@@ -80,11 +78,11 @@ def analyze_hotspots(
     if not history.commits:
         return HotspotsResult(hotspots=(), total_detected=0)
 
-    paths = _select_paths(history, params.max_files)
+    paths = most_touched_paths(history, params.max_files)
     if not paths:
         return HotspotsResult(hotspots=(), total_detected=0)
 
-    per_path = _collect_modifications(history, repo, paths)
+    per_path = _to_modifications(history, collect_patches(history, repo, paths))
 
     hotspots = [
         _to_hotspot(path, region)
@@ -99,57 +97,21 @@ def analyze_hotspots(
     )
 
 
-def _select_paths(history: History, max_files: int) -> list[str]:
-    """The most-touched paths, so the diff fetch stays bounded."""
-    counts: dict[str, int] = {}
-    for commit in history.commits:
-        for change in commit.files:
-            counts[change.path] = counts.get(change.path, 0) + 1
-    ranked = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
-    return [path for path, _ in ranked[:max_files]]
-
-
-def _collect_modifications(
-    history: History, repo: GitRepo, paths: list[str]
-) -> dict[str, list[_Modification]]:
-    """Fetch every relevant diff in one ``git log -p`` call and parse hunks."""
+def _to_modifications(history: History, patches: PatchIndex) -> dict[str, list[_Modification]]:
+    """Join patch line ranges against commit metadata for scoring."""
     known = {c.sha: c for c in history.commits}
-
-    output = repo.run(
-        "log",
-        history.head_sha,
-        f"--format={_SENTINEL}%H",
-        "-p",
-        "-M",
-        "--first-parent",
-        "--no-color",
-        "--",
-        *paths,
-    )
-
     per_path: dict[str, list[_Modification]] = {}
-    for chunk in output.split(_SENTINEL):
-        if not chunk.strip():
-            continue
-        sha, _, diff_text = chunk.partition("\n")
-        commit = known.get(sha.strip())
-        if commit is None:
-            continue  # outside the analyzed range (e.g. --days narrowed it)
-
-        for file_diff in parse_unified_diff(diff_text):
-            if file_diff.is_binary:
-                continue
-            for hunk in file_diff.hunks:
-                per_path.setdefault(file_diff.path, []).append(
-                    _Modification(
-                        sha=commit.sha,
-                        when=commit.authored_at,
-                        author_class=commit.author_class,
-                        line_start=hunk.new_start,
-                        line_end=max(hunk.new_start + hunk.new_count - 1, hunk.new_start),
-                    )
-                )
-
+    for path, ranges in patches.items():
+        per_path[path] = [
+            _Modification(
+                sha=rng.sha,
+                when=known[rng.sha].authored_at,
+                author_class=known[rng.sha].author_class,
+                line_start=rng.line_start,
+                line_end=rng.line_end,
+            )
+            for rng in ranges
+        ]
     return per_path
 
 
