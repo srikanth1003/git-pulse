@@ -34,6 +34,9 @@ removing a key, or changing a value's type, bumps `schema_version`. Pin on
 - `attribution.authors[].author_class` is one of `human`, `mixed`, `agent`. A
   fourth value, `unknown`, is reserved and not currently emitted — treat it as
   "do not count this author either way" rather than as an error.
+- `mixed` is likewise reserved: every current attribution signal has a weight
+  outside the 0.30–0.70 band that would produce it, so `mixed_commits` is
+  always `0`. A future per-hunk fractional signal is what would make it real.
 - `attribution.signals_seen` counts signal *instances*, not commits. The
   `bot_identity` signal is tested against both the author and the committer
   field, so a run of 48 bot commits reports 96 matches.
