@@ -10,6 +10,7 @@ from git_pulse.config import ConfigError, load_config
 from git_pulse.gitlayer.cache import HistoryCache
 from git_pulse.gitlayer.collect import CollectOptions
 from git_pulse.gitlayer.repo import GitError, NotARepositoryError
+from git_pulse.render.csv_output import render_csv
 from git_pulse.render.json_output import render_json
 from git_pulse.render.markdown import render_markdown
 from git_pulse.render.terminal import render_terminal
@@ -35,6 +36,7 @@ def analyze(
     model: str | None = typer.Option(None, help="LiteLLM model string, e.g. gpt-4o-mini."),
     json_output: bool = typer.Option(False, "--json", help="Emit JSON on stdout."),
     markdown_output: bool = typer.Option(False, "--markdown", help="Emit Markdown on stdout."),
+    csv_output: bool = typer.Option(False, "--csv", help="Emit per-file CSV on stdout."),
     output: str | None = typer.Option(None, help="Also write the JSON report to this file."),
     no_cache: bool = typer.Option(False, "--no-cache", help="Bypass the history cache."),
     refresh: bool = typer.Option(False, "--refresh", help="Recompute and overwrite the cache."),
@@ -45,7 +47,7 @@ def analyze(
     Runs entirely offline by default; ``--llm`` adds an interpretive narrative.
     """
     # Progress messages must never contaminate --json/--markdown stdout.
-    console = Console(stderr=json_output or markdown_output)
+    console = Console(stderr=json_output or markdown_output or csv_output)
     out = Console()
 
     repo_path = Path(path).expanduser()
@@ -104,6 +106,8 @@ def analyze(
         out.file.write(render_json(report) + "\n")
     elif markdown_output:
         out.file.write(render_markdown(report) + "\n")
+    elif csv_output:
+        out.file.write(render_csv(report))
     else:
         render_terminal(report, console=out)
 
