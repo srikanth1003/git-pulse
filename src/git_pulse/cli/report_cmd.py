@@ -13,13 +13,14 @@ from git_pulse.gitlayer.cache import HistoryCache
 from git_pulse.gitlayer.collect import CollectOptions
 from git_pulse.gitlayer.repo import GitError, NotARepositoryError
 from git_pulse.render.csv_output import render_csv
+from git_pulse.render.html_report import render_html
 from git_pulse.render.json_output import render_json
 from git_pulse.render.markdown import render_markdown
 from git_pulse.report.builder import add_narrative, build_report
 
 app = typer.Typer()
 
-_FORMATS = {"json", "md", "markdown", "csv"}
+_FORMATS = {"json", "md", "markdown", "csv", "html"}
 
 EXIT_USAGE = 2
 EXIT_ERROR = 1
@@ -84,6 +85,8 @@ def report(
         content = render_json(r)
     elif detected in ("md", "markdown"):
         content = render_markdown(r)
+    elif detected == "html":
+        content = render_html(r)
     else:
         content = render_csv(r)
 
@@ -98,4 +101,6 @@ def _detect_format(path: Path) -> str:
         return "md"
     if ext == "csv":
         return "csv"
+    if ext in ("html", "htm"):
+        return "html"
     return "json"
