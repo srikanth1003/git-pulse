@@ -15,6 +15,7 @@ from git_pulse.models.report import AttributionSummary, Report
 from git_pulse.models.results import (
     ChurnResult,
     CommitClassificationResult,
+    ComplexityResult,
     CouplingResult,
     HotspotsResult,
     LineReworkResult,
@@ -71,6 +72,7 @@ def _payload(report: Report) -> dict[str, Any]:
         "survival": _survival(report.survival),
         "szz": _szz(report.szz),
         "risk": _risk(report.risk),
+        "complexity": _complexity(report.complexity),
         "narrative": _narrative(report),
         "warnings": list(report.warnings),
     }
@@ -352,5 +354,24 @@ def _risk(r: RiskResult | None) -> dict[str, Any] | None:
                 "bus_factor": f.bus_factor,
             }
             for f in r.files
+        ],
+    }
+
+
+def _complexity(c: ComplexityResult | None) -> dict[str, Any] | None:
+    if c is None:
+        return None
+    return {
+        "repo_avg_depth": c.repo_avg_depth,
+        "repo_max_depth": c.repo_max_depth,
+        "files": [
+            {
+                "path": f.path,
+                "avg_depth": f.avg_depth,
+                "max_depth": f.max_depth,
+                "deep_line_share": f.deep_line_share,
+                "total_lines": f.total_lines,
+            }
+            for f in c.files
         ],
     }

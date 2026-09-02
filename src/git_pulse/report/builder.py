@@ -9,6 +9,7 @@ from pathlib import Path
 from git_pulse import __version__
 from git_pulse.analysis.churn import analyze_churn, analyze_rework
 from git_pulse.analysis.commit_class import classify_commits
+from git_pulse.analysis.complexity import analyze_complexity
 from git_pulse.analysis.coupling import analyze_coupling
 from git_pulse.analysis.hotspots import HotspotParams, analyze_hotspots
 from git_pulse.analysis.line_lifetime import build_lifetime_index
@@ -93,6 +94,7 @@ def build_report(
         survival=analyze_survival(history, lifetime_idx) if lifetime_idx else None,
         szz=analyze_szz(history, repo, classification),
         risk=analyze_risk(churn_result, ownership),
+        complexity=analyze_complexity(repo, history.head_sha, top_paths) if top_paths else None,
         warnings=_warnings(history),
     )
 

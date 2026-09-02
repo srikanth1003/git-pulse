@@ -43,6 +43,7 @@ def render_terminal(report: Report, *, console: Console | None = None) -> None:
     _survival(report, console)
     _szz(report, console)
     _risk(report, console)
+    _complexity(report, console)
     _narrative(report, console)
     _warnings(report, console)
 
@@ -263,6 +264,15 @@ def _risk(report: Report, console: Console) -> None:
     console.print(
         f"  Risk: [red]{r.hot_risk} hot[/red], {r.quiet_risk} quiet, "
         f"[green]{r.active} active[/green], {r.stable} stable"
+    )
+
+
+def _complexity(report: Report, console: Console) -> None:
+    c = report.complexity
+    if c is None or not c.files:
+        return
+    console.print(
+        f"  Complexity (indentation): avg depth {c.repo_avg_depth:.1f}, max {c.repo_max_depth}"
     )
 
 

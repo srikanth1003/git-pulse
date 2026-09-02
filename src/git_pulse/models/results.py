@@ -183,6 +183,24 @@ class CommitClassificationResult:
 
 
 @dataclass(frozen=True)
+class FileComplexity:
+    """Indentation-based complexity for one file."""
+
+    path: str
+    avg_depth: float
+    max_depth: int
+    deep_line_share: float  # fraction of lines at depth >= 4
+    total_lines: int
+
+
+@dataclass(frozen=True)
+class ComplexityResult:
+    files: tuple[FileComplexity, ...]
+    repo_avg_depth: float
+    repo_max_depth: int
+
+
+@dataclass(frozen=True)
 class FileRisk:
     """Risk classification for one file."""
 

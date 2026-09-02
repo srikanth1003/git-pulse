@@ -16,6 +16,7 @@ from git_pulse.models.history import AuthorClass
 from git_pulse.models.results import (
     ChurnResult,
     CommitClassificationResult,
+    ComplexityResult,
     CouplingResult,
     HotspotsResult,
     LineReworkResult,
@@ -94,6 +95,7 @@ class Report:
     survival: SurvivalResult | None = None
     szz: SZZResult | None = None
     risk: RiskResult | None = None
+    complexity: ComplexityResult | None = None
 
     # Optional LLM layer — ``narrative`` is the summary text.
     narrative: str | None = None

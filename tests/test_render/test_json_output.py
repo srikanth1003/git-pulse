@@ -33,6 +33,7 @@ TOP_LEVEL_KEYS = {
     "survival",
     "szz",
     "risk",
+    "complexity",
     "narrative",
     "warnings",
 }
