@@ -40,6 +40,7 @@ def render_terminal(report: Report, *, console: Console | None = None) -> None:
     _coupling(report, console)
     _ownership(report, console)
     _commit_classification(report, console)
+    _survival(report, console)
     _narrative(report, console)
     _warnings(report, console)
 
@@ -227,6 +228,20 @@ def _commit_classification(report: Report, console: Console) -> None:
     if cc is None or (cc.total_reverts == 0 and cc.total_fixes == 0):
         return
     console.print(f"  Reverts: {cc.total_reverts}  ·  Fixes: {cc.total_fixes}")
+
+
+def _survival(report: Report, console: Console) -> None:
+    s = report.survival
+    if s is None or s.total_lines == 0:
+        return
+    parts = [f"  Line survival: {s.total_lines} lines tracked, {s.censored_lines} censored"]
+    if s.overall_median_days is not None:
+        parts.append(f"median {s.overall_median_days:.0f}d")
+    if s.agent_median_days is not None:
+        parts.append(f"agent {s.agent_median_days:.0f}d")
+    if s.human_median_days is not None:
+        parts.append(f"human {s.human_median_days:.0f}d")
+    console.print("  ·  ".join(parts))
 
 
 def _narrative(report: Report, console: Console) -> None:

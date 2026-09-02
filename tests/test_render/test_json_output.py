@@ -30,6 +30,7 @@ TOP_LEVEL_KEYS = {
     "ownership",
     "line_rework",
     "commit_classification",
+    "survival",
     "narrative",
     "warnings",
 }

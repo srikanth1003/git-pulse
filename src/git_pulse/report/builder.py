@@ -15,6 +15,7 @@ from git_pulse.analysis.line_lifetime import build_lifetime_index
 from git_pulse.analysis.line_rework import analyze_line_rework
 from git_pulse.analysis.ownership import analyze_ownership
 from git_pulse.analysis.sessions import analyze_sessions
+from git_pulse.analysis.survival import analyze_survival
 from git_pulse.analysis.velocity import analyze_velocity
 from git_pulse.attribution.engine import AttributionEngine
 from git_pulse.config import GitPulseConfig
@@ -85,6 +86,7 @@ def build_report(
         ownership=ownership,
         line_rework=line_rework,
         commit_classification=classify_commits(history),
+        survival=analyze_survival(history, lifetime_idx) if lifetime_idx else None,
         warnings=_warnings(history),
     )
 

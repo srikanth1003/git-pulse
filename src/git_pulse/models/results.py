@@ -183,6 +183,28 @@ class CommitClassificationResult:
 
 
 @dataclass(frozen=True)
+class SurvivalPoint:
+    """One step of a Kaplan-Meier survival curve."""
+
+    time_days: float
+    survival: float
+    at_risk: int
+    events: int
+
+
+@dataclass(frozen=True)
+class SurvivalResult:
+    overall_median_days: float | None
+    agent_median_days: float | None
+    human_median_days: float | None
+    overall_curve: tuple[SurvivalPoint, ...]
+    agent_curve: tuple[SurvivalPoint, ...]
+    human_curve: tuple[SurvivalPoint, ...]
+    total_lines: int
+    censored_lines: int
+
+
+@dataclass(frozen=True)
 class LineReworkResult:
     """True per-line rework, replacing the file-granularity upper bound."""
 

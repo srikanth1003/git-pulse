@@ -21,6 +21,7 @@ from git_pulse.models.results import (
     OwnershipResult,
     ReworkResult,
     SessionsResult,
+    SurvivalResult,
     VelocityResult,
 )
 
@@ -65,6 +66,7 @@ def _payload(report: Report) -> dict[str, Any]:
         "ownership": _ownership(report.ownership),
         "line_rework": _line_rework(report.line_rework),
         "commit_classification": _commit_classification(report.commit_classification),
+        "survival": _survival(report.survival),
         "narrative": _narrative(report),
         "warnings": list(report.warnings),
     }
@@ -270,4 +272,43 @@ def _commit_classification(cc: CommitClassificationResult | None) -> dict[str, A
         "total_fixes": cc.total_fixes,
         "reverts": [{"sha": c.sha, "evidence": c.evidence} for c in cc.reverts],
         "fixes": [{"sha": c.sha, "evidence": c.evidence} for c in cc.fixes],
+    }
+
+
+def _survival(s: SurvivalResult | None) -> dict[str, Any] | None:
+    if s is None:
+        return None
+    return {
+        "overall_median_days": s.overall_median_days,
+        "agent_median_days": s.agent_median_days,
+        "human_median_days": s.human_median_days,
+        "total_lines": s.total_lines,
+        "censored_lines": s.censored_lines,
+        "overall_curve": [
+            {
+                "time_days": p.time_days,
+                "survival": p.survival,
+                "at_risk": p.at_risk,
+                "events": p.events,
+            }
+            for p in s.overall_curve
+        ],
+        "agent_curve": [
+            {
+                "time_days": p.time_days,
+                "survival": p.survival,
+                "at_risk": p.at_risk,
+                "events": p.events,
+            }
+            for p in s.agent_curve
+        ],
+        "human_curve": [
+            {
+                "time_days": p.time_days,
+                "survival": p.survival,
+                "at_risk": p.at_risk,
+                "events": p.events,
+            }
+            for p in s.human_curve
+        ],
     }
