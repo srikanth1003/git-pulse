@@ -22,6 +22,7 @@ from git_pulse.models.results import (
     ReworkResult,
     SessionsResult,
     SurvivalResult,
+    SZZResult,
     VelocityResult,
 )
 
@@ -67,6 +68,7 @@ def _payload(report: Report) -> dict[str, Any]:
         "line_rework": _line_rework(report.line_rework),
         "commit_classification": _commit_classification(report.commit_classification),
         "survival": _survival(report.survival),
+        "szz": _szz(report.szz),
         "narrative": _narrative(report),
         "warnings": list(report.warnings),
     }
@@ -310,5 +312,23 @@ def _survival(s: SurvivalResult | None) -> dict[str, Any] | None:
                 "events": p.events,
             }
             for p in s.human_curve
+        ],
+    }
+
+
+def _szz(s: SZZResult | None) -> dict[str, Any] | None:
+    if s is None:
+        return None
+    return {
+        "total_introductions": s.total_introductions,
+        "bug_introducing_commits": s.bug_introducing_commits,
+        "introductions": [
+            {
+                "introducing_sha": i.introducing_sha,
+                "fix_sha": i.fix_sha,
+                "file_path": i.file_path,
+                "author_email": i.author_email,
+            }
+            for i in s.introductions
         ],
     }

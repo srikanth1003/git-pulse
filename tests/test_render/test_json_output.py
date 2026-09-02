@@ -31,6 +31,7 @@ TOP_LEVEL_KEYS = {
     "line_rework",
     "commit_classification",
     "survival",
+    "szz",
     "narrative",
     "warnings",
 }

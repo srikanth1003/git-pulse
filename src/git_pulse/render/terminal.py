@@ -41,6 +41,7 @@ def render_terminal(report: Report, *, console: Console | None = None) -> None:
     _ownership(report, console)
     _commit_classification(report, console)
     _survival(report, console)
+    _szz(report, console)
     _narrative(report, console)
     _warnings(report, console)
 
@@ -242,6 +243,16 @@ def _survival(report: Report, console: Console) -> None:
     if s.human_median_days is not None:
         parts.append(f"human {s.human_median_days:.0f}d")
     console.print("  ·  ".join(parts))
+
+
+def _szz(report: Report, console: Console) -> None:
+    s = report.szz
+    if s is None or s.total_introductions == 0:
+        return
+    console.print(
+        f"  Bug introductions (SZZ): {s.total_introductions} across "
+        f"{s.bug_introducing_commits} commits"
+    )
 
 
 def _narrative(report: Report, console: Console) -> None:

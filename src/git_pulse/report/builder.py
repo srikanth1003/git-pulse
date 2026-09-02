@@ -16,6 +16,7 @@ from git_pulse.analysis.line_rework import analyze_line_rework
 from git_pulse.analysis.ownership import analyze_ownership
 from git_pulse.analysis.sessions import analyze_sessions
 from git_pulse.analysis.survival import analyze_survival
+from git_pulse.analysis.szz import analyze_szz
 from git_pulse.analysis.velocity import analyze_velocity
 from git_pulse.attribution.engine import AttributionEngine
 from git_pulse.config import GitPulseConfig
@@ -64,6 +65,7 @@ def build_report(
     lifetime_idx = build_lifetime_index(history, repo, top_paths, patches) if top_paths else {}
     ownership = analyze_ownership(lifetime_idx) if lifetime_idx else None
     line_rework = analyze_line_rework(history, lifetime_idx) if lifetime_idx else None
+    classification = classify_commits(history)
 
     return Report(
         repo_path=str(path),
@@ -85,8 +87,9 @@ def build_report(
         coupling=analyze_coupling(history),
         ownership=ownership,
         line_rework=line_rework,
-        commit_classification=classify_commits(history),
+        commit_classification=classification,
         survival=analyze_survival(history, lifetime_idx) if lifetime_idx else None,
+        szz=analyze_szz(history, repo, classification),
         warnings=_warnings(history),
     )
 

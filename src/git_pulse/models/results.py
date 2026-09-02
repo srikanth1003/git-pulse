@@ -183,6 +183,23 @@ class CommitClassificationResult:
 
 
 @dataclass(frozen=True)
+class BugIntroduction:
+    """A commit identified as introducing a bug via SZZ."""
+
+    introducing_sha: str
+    fix_sha: str
+    file_path: str
+    author_email: str
+
+
+@dataclass(frozen=True)
+class SZZResult:
+    introductions: tuple[BugIntroduction, ...]
+    total_introductions: int
+    bug_introducing_commits: int  # distinct introducing SHAs
+
+
+@dataclass(frozen=True)
 class SurvivalPoint:
     """One step of a Kaplan-Meier survival curve."""
 

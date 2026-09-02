@@ -23,6 +23,7 @@ from git_pulse.models.results import (
     ReworkResult,
     SessionsResult,
     SurvivalResult,
+    SZZResult,
     VelocityResult,
 )
 
@@ -90,6 +91,7 @@ class Report:
     line_rework: LineReworkResult | None = None
     commit_classification: CommitClassificationResult | None = None
     survival: SurvivalResult | None = None
+    szz: SZZResult | None = None
 
     # Optional LLM layer — ``narrative`` is the summary text.
     narrative: str | None = None
