@@ -12,6 +12,7 @@ from git_pulse.analysis.coupling import analyze_coupling
 from git_pulse.analysis.hotspots import HotspotParams, analyze_hotspots
 from git_pulse.analysis.line_lifetime import build_lifetime_index
 from git_pulse.analysis.line_rework import analyze_line_rework
+from git_pulse.analysis.ownership import analyze_ownership
 from git_pulse.analysis.sessions import analyze_sessions
 from git_pulse.analysis.velocity import analyze_velocity
 from git_pulse.attribution.engine import AttributionEngine
@@ -59,6 +60,7 @@ def build_report(
     top_paths = most_touched_paths(history, hotspot_params.max_files)
     patches = collect_patches(history, repo, top_paths) if top_paths else {}
     lifetime_idx = build_lifetime_index(history, repo, top_paths, patches) if top_paths else {}
+    ownership = analyze_ownership(lifetime_idx) if lifetime_idx else None
     line_rework = analyze_line_rework(history, lifetime_idx) if lifetime_idx else None
 
     return Report(
@@ -79,6 +81,7 @@ def build_report(
         hotspots=analyze_hotspots(history, repo, hotspot_params),
         rework=analyze_rework(history),
         coupling=analyze_coupling(history),
+        ownership=ownership,
         line_rework=line_rework,
         warnings=_warnings(history),
     )

@@ -38,6 +38,7 @@ def render_terminal(report: Report, *, console: Console | None = None) -> None:
     _sessions(report, console)
     _hotspots(report, console)
     _coupling(report, console)
+    _ownership(report, console)
     _narrative(report, console)
     _warnings(report, console)
 
@@ -191,6 +192,31 @@ def _coupling(report: Report, console: Console) -> None:
     for p in report.coupling.pairs:
         table.add_row(
             escape(p.file_a), escape(p.file_b), str(p.shared_commits), _pct(p.coupling_ratio)
+        )
+    console.print(table)
+
+
+def _ownership(report: Report, console: Console) -> None:
+    if report.ownership is None or not report.ownership.files:
+        return
+    o = report.ownership
+    console.print(
+        f"  Bus factor (repo): [bold]{o.repo_bus_factor}[/bold] ({o.total_authors} authors, {o.total_lines} lines)"
+    )
+    table = Table(title="Ownership", title_justify="left", expand=False)
+    table.add_column("File", overflow="fold")
+    table.add_column("Lines", justify="right")
+    table.add_column("Top owner", overflow="fold")
+    table.add_column("Share", justify="right")
+    table.add_column("Bus", justify="right")
+    for f in report.ownership.files[:10]:
+        top_email = f.owners[0][0] if f.owners else ""
+        table.add_row(
+            escape(f.path),
+            str(f.total_lines),
+            escape(top_email),
+            _pct(f.top_owner_share),
+            str(f.bus_factor),
         )
     console.print(table)
 

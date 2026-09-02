@@ -27,6 +27,7 @@ TOP_LEVEL_KEYS = {
     "sessions",
     "hotspots",
     "coupling",
+    "ownership",
     "line_rework",
     "narrative",
     "warnings",

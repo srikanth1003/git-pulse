@@ -147,6 +147,25 @@ class CouplingResult:
 
 
 @dataclass(frozen=True)
+class FileOwnership:
+    """Ownership breakdown for one file."""
+
+    path: str
+    total_lines: int
+    owners: tuple[tuple[str, int], ...]  # (author_email, line_count), descending
+    top_owner_share: float
+    bus_factor: int
+
+
+@dataclass(frozen=True)
+class OwnershipResult:
+    files: tuple[FileOwnership, ...]
+    repo_bus_factor: int
+    total_lines: int
+    total_authors: int
+
+
+@dataclass(frozen=True)
 class LineReworkResult:
     """True per-line rework, replacing the file-granularity upper bound."""
 

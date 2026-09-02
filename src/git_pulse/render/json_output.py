@@ -17,6 +17,7 @@ from git_pulse.models.results import (
     CouplingResult,
     HotspotsResult,
     LineReworkResult,
+    OwnershipResult,
     ReworkResult,
     SessionsResult,
     VelocityResult,
@@ -60,6 +61,7 @@ def _payload(report: Report) -> dict[str, Any]:
         "sessions": _sessions(report.sessions),
         "hotspots": _hotspots(report.hotspots),
         "coupling": _coupling(report.coupling),
+        "ownership": _ownership(report.ownership),
         "line_rework": _line_rework(report.line_rework),
         "narrative": _narrative(report),
         "warnings": list(report.warnings),
@@ -220,6 +222,26 @@ def _coupling(c: CouplingResult) -> dict[str, Any]:
                 "commit_shas": list(p.commit_shas),
             }
             for p in c.pairs
+        ],
+    }
+
+
+def _ownership(o: OwnershipResult | None) -> dict[str, Any] | None:
+    if o is None:
+        return None
+    return {
+        "repo_bus_factor": o.repo_bus_factor,
+        "total_lines": o.total_lines,
+        "total_authors": o.total_authors,
+        "files": [
+            {
+                "path": f.path,
+                "total_lines": f.total_lines,
+                "top_owner_share": f.top_owner_share,
+                "bus_factor": f.bus_factor,
+                "owners": [{"email": email, "lines": count} for email, count in f.owners],
+            }
+            for f in o.files
         ],
     }
 
