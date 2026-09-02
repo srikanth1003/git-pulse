@@ -183,6 +183,25 @@ class CommitClassificationResult:
 
 
 @dataclass(frozen=True)
+class FileRisk:
+    """Risk classification for one file."""
+
+    path: str
+    quadrant: str  # "hot-risk", "quiet-risk", "active", "stable"
+    churn: int
+    bus_factor: int
+
+
+@dataclass(frozen=True)
+class RiskResult:
+    files: tuple[FileRisk, ...]
+    hot_risk: int
+    quiet_risk: int
+    active: int
+    stable: int
+
+
+@dataclass(frozen=True)
 class BugIntroduction:
     """A commit identified as introducing a bug via SZZ."""
 

@@ -42,6 +42,7 @@ def render_terminal(report: Report, *, console: Console | None = None) -> None:
     _commit_classification(report, console)
     _survival(report, console)
     _szz(report, console)
+    _risk(report, console)
     _narrative(report, console)
     _warnings(report, console)
 
@@ -252,6 +253,16 @@ def _szz(report: Report, console: Console) -> None:
     console.print(
         f"  Bug introductions (SZZ): {s.total_introductions} across "
         f"{s.bug_introducing_commits} commits"
+    )
+
+
+def _risk(report: Report, console: Console) -> None:
+    r = report.risk
+    if r is None or not r.files:
+        return
+    console.print(
+        f"  Risk: [red]{r.hot_risk} hot[/red], {r.quiet_risk} quiet, "
+        f"[green]{r.active} active[/green], {r.stable} stable"
     )
 
 

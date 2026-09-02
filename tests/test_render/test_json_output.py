@@ -32,6 +32,7 @@ TOP_LEVEL_KEYS = {
     "commit_classification",
     "survival",
     "szz",
+    "risk",
     "narrative",
     "warnings",
 }

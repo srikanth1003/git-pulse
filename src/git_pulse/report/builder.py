@@ -14,6 +14,7 @@ from git_pulse.analysis.hotspots import HotspotParams, analyze_hotspots
 from git_pulse.analysis.line_lifetime import build_lifetime_index
 from git_pulse.analysis.line_rework import analyze_line_rework
 from git_pulse.analysis.ownership import analyze_ownership
+from git_pulse.analysis.risk import analyze_risk
 from git_pulse.analysis.sessions import analyze_sessions
 from git_pulse.analysis.survival import analyze_survival
 from git_pulse.analysis.szz import analyze_szz
@@ -66,6 +67,7 @@ def build_report(
     ownership = analyze_ownership(lifetime_idx) if lifetime_idx else None
     line_rework = analyze_line_rework(history, lifetime_idx) if lifetime_idx else None
     classification = classify_commits(history)
+    churn_result = analyze_churn(history, limit=config.analysis.max_hotspots)
 
     return Report(
         repo_path=str(path),
@@ -79,7 +81,7 @@ def build_report(
         time_range=history.time_range if history.commits else None,
         skipped_files=history.skipped_files,
         attribution=_summarize_attribution(history),
-        churn=analyze_churn(history, limit=config.analysis.max_hotspots),
+        churn=churn_result,
         velocity=analyze_velocity(history),
         sessions=analyze_sessions(history, gap_minutes=config.sessions.gap_minutes),
         hotspots=analyze_hotspots(history, repo, hotspot_params),
@@ -90,6 +92,7 @@ def build_report(
         commit_classification=classification,
         survival=analyze_survival(history, lifetime_idx) if lifetime_idx else None,
         szz=analyze_szz(history, repo, classification),
+        risk=analyze_risk(churn_result, ownership),
         warnings=_warnings(history),
     )
 

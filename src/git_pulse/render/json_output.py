@@ -20,6 +20,7 @@ from git_pulse.models.results import (
     LineReworkResult,
     OwnershipResult,
     ReworkResult,
+    RiskResult,
     SessionsResult,
     SurvivalResult,
     SZZResult,
@@ -69,6 +70,7 @@ def _payload(report: Report) -> dict[str, Any]:
         "commit_classification": _commit_classification(report.commit_classification),
         "survival": _survival(report.survival),
         "szz": _szz(report.szz),
+        "risk": _risk(report.risk),
         "narrative": _narrative(report),
         "warnings": list(report.warnings),
     }
@@ -330,5 +332,25 @@ def _szz(s: SZZResult | None) -> dict[str, Any] | None:
                 "author_email": i.author_email,
             }
             for i in s.introductions
+        ],
+    }
+
+
+def _risk(r: RiskResult | None) -> dict[str, Any] | None:
+    if r is None:
+        return None
+    return {
+        "hot_risk": r.hot_risk,
+        "quiet_risk": r.quiet_risk,
+        "active": r.active,
+        "stable": r.stable,
+        "files": [
+            {
+                "path": f.path,
+                "quadrant": f.quadrant,
+                "churn": f.churn,
+                "bus_factor": f.bus_factor,
+            }
+            for f in r.files
         ],
     }
