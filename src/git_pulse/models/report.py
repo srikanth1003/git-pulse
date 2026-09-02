@@ -17,6 +17,7 @@ from git_pulse.models.results import (
     ChurnResult,
     CouplingResult,
     HotspotsResult,
+    LineReworkResult,
     ReworkResult,
     SessionsResult,
     VelocityResult,
@@ -82,6 +83,7 @@ class Report:
     hotspots: HotspotsResult
     rework: ReworkResult
     coupling: CouplingResult
+    line_rework: LineReworkResult | None = None
 
     # Optional LLM layer — ``narrative`` is the summary text.
     narrative: str | None = None

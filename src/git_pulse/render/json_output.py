@@ -16,6 +16,7 @@ from git_pulse.models.results import (
     ChurnResult,
     CouplingResult,
     HotspotsResult,
+    LineReworkResult,
     ReworkResult,
     SessionsResult,
     VelocityResult,
@@ -59,6 +60,7 @@ def _payload(report: Report) -> dict[str, Any]:
         "sessions": _sessions(report.sessions),
         "hotspots": _hotspots(report.hotspots),
         "coupling": _coupling(report.coupling),
+        "line_rework": _line_rework(report.line_rework),
         "narrative": _narrative(report),
         "warnings": list(report.warnings),
     }
@@ -219,4 +221,18 @@ def _coupling(c: CouplingResult) -> dict[str, Any]:
             }
             for p in c.pairs
         ],
+    }
+
+
+def _line_rework(lr: LineReworkResult | None) -> dict[str, Any] | None:
+    if lr is None:
+        return None
+    return {
+        "total_surviving_lines": lr.total_surviving_lines,
+        "reworked_lines": lr.reworked_lines,
+        "line_rework_rate": lr.line_rework_rate,
+        "agent_reworked_lines": lr.agent_reworked_lines,
+        "human_reworked_lines": lr.human_reworked_lines,
+        "agent_line_rework_rate": lr.agent_line_rework_rate,
+        "human_line_rework_rate": lr.human_line_rework_rate,
     }

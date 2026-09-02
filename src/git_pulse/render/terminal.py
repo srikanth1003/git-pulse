@@ -117,6 +117,12 @@ def _churn(report: Report, console: Console) -> None:
         f"  Rework (file-level): {report.rework.file_rework_rate * 100:.0f}% of churn "
         f"in {report.rework.reworked_files} of {report.rework.total_files} files"
     )
+    if report.line_rework is not None:
+        lr = report.line_rework
+        console.print(
+            f"  Rework (per-line):   {lr.line_rework_rate * 100:.0f}% of "
+            f"{lr.total_surviving_lines} surviving lines"
+        )
 
 
 def _velocity(report: Report, console: Console) -> None:

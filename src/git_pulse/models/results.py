@@ -144,3 +144,16 @@ class CoupledPair:
 class CouplingResult:
     pairs: tuple[CoupledPair, ...]  # sorted by coupling_ratio descending
     total_detected: int  # before truncation
+
+
+@dataclass(frozen=True)
+class LineReworkResult:
+    """True per-line rework, replacing the file-granularity upper bound."""
+
+    total_surviving_lines: int
+    reworked_lines: int
+    line_rework_rate: float
+    agent_reworked_lines: int
+    human_reworked_lines: int
+    agent_line_rework_rate: float
+    human_line_rework_rate: float

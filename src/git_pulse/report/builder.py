@@ -10,12 +10,15 @@ from git_pulse import __version__
 from git_pulse.analysis.churn import analyze_churn, analyze_rework
 from git_pulse.analysis.coupling import analyze_coupling
 from git_pulse.analysis.hotspots import HotspotParams, analyze_hotspots
+from git_pulse.analysis.line_lifetime import build_lifetime_index
+from git_pulse.analysis.line_rework import analyze_line_rework
 from git_pulse.analysis.sessions import analyze_sessions
 from git_pulse.analysis.velocity import analyze_velocity
 from git_pulse.attribution.engine import AttributionEngine
 from git_pulse.config import GitPulseConfig
 from git_pulse.gitlayer.cache import HistoryCache
 from git_pulse.gitlayer.collect import CollectOptions, collect_history
+from git_pulse.gitlayer.patches import collect_patches, most_touched_paths
 from git_pulse.gitlayer.repo import GitRepo
 from git_pulse.models.history import AuthorClass, History
 from git_pulse.models.report import AttributionSummary, AuthorSummary, Report
@@ -53,6 +56,11 @@ def build_report(
         max_hotspots=config.analysis.max_hotspots,
     )
 
+    top_paths = most_touched_paths(history, hotspot_params.max_files)
+    patches = collect_patches(history, repo, top_paths) if top_paths else {}
+    lifetime_idx = build_lifetime_index(history, repo, top_paths, patches) if top_paths else {}
+    line_rework = analyze_line_rework(history, lifetime_idx) if lifetime_idx else None
+
     return Report(
         repo_path=str(path),
         repo_name=path.resolve().name,
@@ -60,8 +68,6 @@ def build_report(
         head_sha=history.head_sha,
         generated_at=now,
         git_pulse_version=__version__,
-        # ``as_cache_dict`` omits the branch because the cache keys it separately.
-        # A report is a provenance record, so it carries the *resolved* branch.
         options={**options.as_cache_dict(), "branch": history.branch},
         total_commits=len(history.commits),
         time_range=history.time_range if history.commits else None,
@@ -73,6 +79,7 @@ def build_report(
         hotspots=analyze_hotspots(history, repo, hotspot_params),
         rework=analyze_rework(history),
         coupling=analyze_coupling(history),
+        line_rework=line_rework,
         warnings=_warnings(history),
     )
 
