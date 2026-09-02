@@ -14,6 +14,7 @@ from typing import Any
 from git_pulse.models.report import AttributionSummary, Report
 from git_pulse.models.results import (
     ChurnResult,
+    CommitClassificationResult,
     CouplingResult,
     HotspotsResult,
     LineReworkResult,
@@ -63,6 +64,7 @@ def _payload(report: Report) -> dict[str, Any]:
         "coupling": _coupling(report.coupling),
         "ownership": _ownership(report.ownership),
         "line_rework": _line_rework(report.line_rework),
+        "commit_classification": _commit_classification(report.commit_classification),
         "narrative": _narrative(report),
         "warnings": list(report.warnings),
     }
@@ -257,4 +259,15 @@ def _line_rework(lr: LineReworkResult | None) -> dict[str, Any] | None:
         "human_reworked_lines": lr.human_reworked_lines,
         "agent_line_rework_rate": lr.agent_line_rework_rate,
         "human_line_rework_rate": lr.human_line_rework_rate,
+    }
+
+
+def _commit_classification(cc: CommitClassificationResult | None) -> dict[str, Any] | None:
+    if cc is None:
+        return None
+    return {
+        "total_reverts": cc.total_reverts,
+        "total_fixes": cc.total_fixes,
+        "reverts": [{"sha": c.sha, "evidence": c.evidence} for c in cc.reverts],
+        "fixes": [{"sha": c.sha, "evidence": c.evidence} for c in cc.fixes],
     }

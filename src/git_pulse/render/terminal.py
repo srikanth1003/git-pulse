@@ -39,6 +39,7 @@ def render_terminal(report: Report, *, console: Console | None = None) -> None:
     _hotspots(report, console)
     _coupling(report, console)
     _ownership(report, console)
+    _commit_classification(report, console)
     _narrative(report, console)
     _warnings(report, console)
 
@@ -219,6 +220,13 @@ def _ownership(report: Report, console: Console) -> None:
             str(f.bus_factor),
         )
     console.print(table)
+
+
+def _commit_classification(report: Report, console: Console) -> None:
+    cc = report.commit_classification
+    if cc is None or (cc.total_reverts == 0 and cc.total_fixes == 0):
+        return
+    console.print(f"  Reverts: {cc.total_reverts}  ·  Fixes: {cc.total_fixes}")
 
 
 def _narrative(report: Report, console: Console) -> None:

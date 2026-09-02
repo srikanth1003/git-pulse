@@ -29,6 +29,7 @@ TOP_LEVEL_KEYS = {
     "coupling",
     "ownership",
     "line_rework",
+    "commit_classification",
     "narrative",
     "warnings",
 }

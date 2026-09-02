@@ -166,6 +166,23 @@ class OwnershipResult:
 
 
 @dataclass(frozen=True)
+class ClassifiedCommit:
+    """A commit classified as a revert or a fix."""
+
+    sha: str
+    kind: str  # "revert" or "fix"
+    evidence: str  # what triggered the classification
+
+
+@dataclass(frozen=True)
+class CommitClassificationResult:
+    reverts: tuple[ClassifiedCommit, ...]
+    fixes: tuple[ClassifiedCommit, ...]
+    total_reverts: int
+    total_fixes: int
+
+
+@dataclass(frozen=True)
 class LineReworkResult:
     """True per-line rework, replacing the file-granularity upper bound."""
 

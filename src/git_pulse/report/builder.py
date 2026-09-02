@@ -8,6 +8,7 @@ from pathlib import Path
 
 from git_pulse import __version__
 from git_pulse.analysis.churn import analyze_churn, analyze_rework
+from git_pulse.analysis.commit_class import classify_commits
 from git_pulse.analysis.coupling import analyze_coupling
 from git_pulse.analysis.hotspots import HotspotParams, analyze_hotspots
 from git_pulse.analysis.line_lifetime import build_lifetime_index
@@ -83,6 +84,7 @@ def build_report(
         coupling=analyze_coupling(history),
         ownership=ownership,
         line_rework=line_rework,
+        commit_classification=classify_commits(history),
         warnings=_warnings(history),
     )
 

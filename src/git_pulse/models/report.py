@@ -15,6 +15,7 @@ from git_pulse.analyst.models import Insight
 from git_pulse.models.history import AuthorClass
 from git_pulse.models.results import (
     ChurnResult,
+    CommitClassificationResult,
     CouplingResult,
     HotspotsResult,
     LineReworkResult,
@@ -86,6 +87,7 @@ class Report:
     coupling: CouplingResult
     ownership: OwnershipResult | None = None
     line_rework: LineReworkResult | None = None
+    commit_classification: CommitClassificationResult | None = None
 
     # Optional LLM layer — ``narrative`` is the summary text.
     narrative: str | None = None
