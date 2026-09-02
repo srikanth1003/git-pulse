@@ -14,6 +14,7 @@ from typing import Any
 from git_pulse.models.report import AttributionSummary, Report
 from git_pulse.models.results import (
     ChurnResult,
+    CouplingResult,
     HotspotsResult,
     ReworkResult,
     SessionsResult,
@@ -57,6 +58,7 @@ def _payload(report: Report) -> dict[str, Any]:
         "velocity": _velocity(report.velocity),
         "sessions": _sessions(report.sessions),
         "hotspots": _hotspots(report.hotspots),
+        "coupling": _coupling(report.coupling),
         "narrative": _narrative(report),
         "warnings": list(report.warnings),
     }
@@ -200,5 +202,21 @@ def _hotspots(h: HotspotsResult) -> dict[str, Any]:
                 "score": s.score,
             }
             for s in h.hotspots
+        ],
+    }
+
+
+def _coupling(c: CouplingResult) -> dict[str, Any]:
+    return {
+        "total_detected": c.total_detected,
+        "pairs": [
+            {
+                "file_a": p.file_a,
+                "file_b": p.file_b,
+                "shared_commits": p.shared_commits,
+                "coupling_ratio": p.coupling_ratio,
+                "commit_shas": list(p.commit_shas),
+            }
+            for p in c.pairs
         ],
     }

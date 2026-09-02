@@ -127,3 +127,20 @@ class Hotspot:
 class HotspotsResult:
     hotspots: tuple[Hotspot, ...]  # sorted by score, descending
     total_detected: int  # before ``max_hotspots`` truncation
+
+
+@dataclass(frozen=True)
+class CoupledPair:
+    """Two files that change together frequently."""
+
+    file_a: str
+    file_b: str
+    shared_commits: int
+    coupling_ratio: float  # shared / min(commits_a, commits_b)
+    commit_shas: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class CouplingResult:
+    pairs: tuple[CoupledPair, ...]  # sorted by coupling_ratio descending
+    total_detected: int  # before truncation

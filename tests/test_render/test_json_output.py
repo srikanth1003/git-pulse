@@ -26,6 +26,7 @@ TOP_LEVEL_KEYS = {
     "velocity",
     "sessions",
     "hotspots",
+    "coupling",
     "narrative",
     "warnings",
 }

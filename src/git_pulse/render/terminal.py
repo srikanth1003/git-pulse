@@ -37,6 +37,7 @@ def render_terminal(report: Report, *, console: Console | None = None) -> None:
     _velocity(report, console)
     _sessions(report, console)
     _hotspots(report, console)
+    _coupling(report, console)
     _narrative(report, console)
     _warnings(report, console)
 
@@ -165,6 +166,25 @@ def _hotspots(report: Report, console: Console) -> None:
             str(h.modification_count),
             f"{h.time_span_hours:.1f}h",
             h.classification,
+        )
+    console.print(table)
+
+
+def _coupling(report: Report, console: Console) -> None:
+    if not report.coupling.pairs:
+        return
+    table = Table(
+        title=f"Temporal coupling ({report.coupling.total_detected} pairs)",
+        title_justify="left",
+        expand=False,
+    )
+    table.add_column("File A", overflow="fold")
+    table.add_column("File B", overflow="fold")
+    table.add_column("Shared", justify="right")
+    table.add_column("Ratio", justify="right")
+    for p in report.coupling.pairs:
+        table.add_row(
+            escape(p.file_a), escape(p.file_b), str(p.shared_commits), _pct(p.coupling_ratio)
         )
     console.print(table)
 
