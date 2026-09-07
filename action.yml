@@ -1,0 +1,144 @@
+name: "git-pulse"
+description: "Analyze agent vs. human code contribution in your repository"
+branding:
+  icon: "activity"
+  color: "blue"
+
+inputs:
+  version:
+    description: "git-pulse version to install"
+    required: false
+    default: "latest"
+  path:
+    description: "Path to the repository to analyze"
+    required: false
+    default: "."
+  days:
+    description: "Analyze the last N days"
+    required: false
+    default: "90"
+  max-agent-share:
+    description: "Gate: fail if agent commit share exceeds this (0.0-1.0)"
+    required: false
+    default: ""
+  max-rework:
+    description: "Gate: fail if file rework rate exceeds this (0.0-1.0)"
+    required: false
+    default: ""
+  min-bus-factor:
+    description: "Gate: fail if repo bus factor is below this"
+    required: false
+    default: ""
+  max-hot-risk:
+    description: "Gate: fail if hot-risk file count exceeds this"
+    required: false
+    default: ""
+  comment:
+    description: "Post a PR comment with the report (true/false)"
+    required: false
+    default: "true"
+
+outputs:
+  report-json:
+    description: "Path to the JSON report file"
+    value: ${{ steps.analyze.outputs.report-json }}
+  agent-share:
+    description: "Agent commit share (0.0-1.0)"
+    value: ${{ steps.metrics.outputs.agent-share }}
+  bus-factor:
+    description: "Repository bus factor"
+    value: ${{ steps.metrics.outputs.bus-factor }}
+  gate-result:
+    description: "Gate result: passed or failed"
+    value: ${{ steps.gate.outputs.result }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install git-pulse
+      shell: bash
+      run: |
+        if [ "${{ inputs.version }}" = "latest" ]; then
+          pip install gitpulse-ai
+        else
+          pip install "gitpulse-ai==${{ inputs.version }}"
+        fi
+
+    - name: Analyze
+      id: analyze
+      shell: bash
+      run: |
+        git-pulse analyze "${{ inputs.path }}" --json --days "${{ inputs.days }}" > /tmp/git-pulse-report.json
+        echo "report-json=/tmp/git-pulse-report.json" >> "$GITHUB_OUTPUT"
+
+    - name: Extract metrics
+      id: metrics
+      shell: bash
+      run: |
+        AGENT_SHARE=$(python3 -c "import json; d=json.load(open('/tmp/git-pulse-report.json')); print(d['attribution']['agent_commit_share'])")
+        BUS_FACTOR=$(python3 -c "import json; d=json.load(open('/tmp/git-pulse-report.json')); o=d.get('ownership'); print(o['repo_bus_factor'] if o else 'N/A')")
+        echo "agent-share=$AGENT_SHARE" >> "$GITHUB_OUTPUT"
+        echo "bus-factor=$BUS_FACTOR" >> "$GITHUB_OUTPUT"
+
+    - name: Generate markdown
+      id: markdown
+      shell: bash
+      run: |
+        git-pulse analyze "${{ inputs.path }}" --markdown --days "${{ inputs.days }}" > /tmp/git-pulse-report.md
+
+    - name: Gate check
+      id: gate
+      shell: bash
+      run: |
+        GATE_ARGS="--report /tmp/git-pulse-report.json"
+        if [ -n "${{ inputs.max-agent-share }}" ]; then
+          GATE_ARGS="$GATE_ARGS --max-agent-share ${{ inputs.max-agent-share }}"
+        fi
+        if [ -n "${{ inputs.max-rework }}" ]; then
+          GATE_ARGS="$GATE_ARGS --max-rework ${{ inputs.max-rework }}"
+        fi
+        if [ -n "${{ inputs.min-bus-factor }}" ]; then
+          GATE_ARGS="$GATE_ARGS --min-bus-factor ${{ inputs.min-bus-factor }}"
+        fi
+        if [ -n "${{ inputs.max-hot-risk }}" ]; then
+          GATE_ARGS="$GATE_ARGS --max-hot-risk ${{ inputs.max-hot-risk }}"
+        fi
+        if git-pulse gate $GATE_ARGS; then
+          echo "result=passed" >> "$GITHUB_OUTPUT"
+        else
+          echo "result=failed" >> "$GITHUB_OUTPUT"
+          exit 1
+        fi
+
+    - name: Post PR comment
+      if: inputs.comment == 'true' && github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const body = fs.readFileSync('/tmp/git-pulse-report.md', 'utf8');
+          const marker = '<!-- git-pulse-report -->';
+          const fullBody = marker + '\n' + body;
+
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+
+          const existing = comments.find(c => c.body.includes(marker));
+          if (existing) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: existing.id,
+              body: fullBody,
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: fullBody,
+            });
+          }
