@@ -9,29 +9,32 @@
 [![Release](https://img.shields.io/github/v/tag/srikanth1003/git-pulse?label=release&sort=semver)](https://github.com/srikanth1003/git-pulse/tags)
 [![Last commit](https://img.shields.io/github/last-commit/srikanth1003/git-pulse)](https://github.com/srikanth1003/git-pulse/commits/main)
 
-**Measure how much of your codebase your AI coding agents actually wrote — and what it cost you in rework.**
+**Measure how much of your codebase your AI coding agents actually wrote — and what it cost you in rework, risk, and ownership concentration.**
 
 > Installed from PyPI as [`gitpulse-ai`](https://pypi.org/project/gitpulse-ai/); the command is `git-pulse`.
 
-git-pulse reads your commit history and reports agent-versus-human attribution, per-file churn, rework rates, work sessions, and the places where edits pile up in the same lines within hours of each other. It works on any git repo, runs entirely offline, and needs no API key.
+git-pulse reads your commit history and produces a full engineering-health report: agent-versus-human attribution, per-file churn, true per-line rework rates, code ownership and bus factor, temporal coupling, Kaplan-Meier line survival, bug-introduction tracing (SZZ), risk quadrants, and indentation-based complexity. It works on any git repo, runs entirely offline, and needs no API key.
 
-## What It Does
-
-git-pulse reads your git history and measures how much of it was written by AI
-coding agents versus humans — then measures what that code cost you in rework,
-churn, and repeated edits to the same lines.
+## What It Measures
 
 | Measurement | What you get |
 |----------|--------------|
 | **Attribution** | Every commit scored as human, mixed, or agent, with the signal that decided it and the provider it came from |
 | **Churn** | Insertions and deletions per file, with the agent share of each file's churn |
-| **Rework** | How often files come back for another edit, split by agent and human |
+| **File rework** | How often files come back for another edit, split by agent and human |
+| **Per-line rework** | True line-level rework — surviving lines written by commits that overwrote earlier content |
 | **Velocity** | Commits per day, active days, files per commit, and the peak day |
 | **Sessions** | Work clustered per author by commit gap, so two people committing in the same hour aren't merged |
 | **Hotspots** | Edits close in both line position *and* time, classified by who touched the region last |
+| **Temporal coupling** | File pairs that always change together — hidden dependencies your architecture diagram doesn't show |
+| **Ownership & bus factor** | Per-file and repo-wide: who wrote which lines, and how many people need to leave before knowledge is lost |
+| **Line survival** | Kaplan-Meier survival curves for code lines, with right-censoring — how long do agent-written vs. human-written lines last? |
+| **Bug introduction (SZZ)** | Traces fix commits back to the commits that introduced the bug, via git blame |
+| **Risk quadrants** | High-churn + single-owner files flagged as "hot risk" — the ones most likely to cause problems |
+| **Complexity** | Indentation-depth proxy — no language parser needed, works on any text file |
+| **Revert/fix detection** | Classifies commits as reverts or fixes from message patterns, feeding the SZZ analysis |
 
-Everything above runs locally with no API key and no network access. Pass `--llm`
-to add an interpretive narrative on top.
+Everything above runs locally with no API key and no network access. Pass `--llm` to add an interpretive narrative on top.
 
 ### Agent-Aware Analysis
 
@@ -144,7 +147,7 @@ Spatiotemporal hotspots — 229 detected, seven highest-scoring shown
   src/shipyard/db/models.py:26-50           6  4.1h        3 / 3    7.0  agent-reworked
   src/shipyard/db/models.py:51-75           6  4.1h        3 / 3    7.0  agent-reworked
   src/shipyard/core/orders.py:82-100        5  2.7h        3 / 2    6.7  agent-reworked
-  tests/test_pricing.py:10-25               5  3.0h        3 / 2    6.3  agent-reworked
+  tests/test_pricing.py:10-25              5  3.0h        3 / 2    6.3  agent-reworked
 ```
 
 Score is `edits² ÷ (1 + hours)`. `human-fixing-agent` means a human touched the
@@ -182,6 +185,23 @@ git-pulse analyze --since 2026-01-01 --until 2026-03-31
 git-pulse analyze --json
 git-pulse analyze --output report.json
 
+# Markdown for pasting into a PR
+git-pulse analyze --markdown
+
+# CSV for spreadsheets
+git-pulse analyze --csv
+
+# Self-contained HTML report with SVG charts
+git-pulse analyze --html
+
+# Save a report in any format (auto-detects from extension)
+git-pulse report --path /path/to/repo report.json
+git-pulse report --path /path/to/repo report.md
+git-pulse report --path /path/to/repo report.html
+
+# Compare two reports
+git-pulse compare before.json after.json
+
 # Add an LLM narrative (requires a provider key)
 export ANTHROPIC_API_KEY=sk-...
 git-pulse analyze --llm
@@ -194,10 +214,76 @@ git-pulse cache info
 git-pulse cache clear
 ```
 
+## Output Formats
+
+| Format | Flag / extension | Use case |
+|--------|-----------------|----------|
+| **Terminal** | (default) | Interactive exploration with rich tables |
+| **JSON** | `--json` / `.json` | CI pipelines, `compare`, `gate`, programmatic consumption |
+| **Markdown** | `--markdown` / `.md` | Paste into a PR, wiki, or Slack |
+| **CSV** | `--csv` / `.csv` | Spreadsheets, pandas, further analysis |
+| **HTML** | `--html` / `.html` | Self-contained report with SVG charts and dark mode |
+
+The JSON shape is a versioned contract (`schema_version: 1`) — see [docs/json-schema.md](docs/json-schema.md). Adding a key does not bump the version; renaming or removing one does. Pin on `schema_version` if you parse the output.
+
+## CI Integration
+
+### GitHub Action
+
+Add git-pulse to any GitHub Actions workflow:
+
+```yaml
+- uses: srikanth1003/git-pulse@v0.6.0
+  with:
+    days: 30
+    max-agent-share: "0.60"   # fail if >60% agent
+    min-bus-factor: "2"       # fail if bus factor < 2
+    comment: "true"           # post markdown report as PR comment
+```
+
+The action installs git-pulse, runs analysis, posts a PR comment with the markdown report, and runs gate checks. It outputs `report-json`, `agent-share`, `bus-factor`, and `gate-result` for downstream steps.
+
+### Threshold Gates
+
+`git-pulse gate` checks metrics against thresholds and exits non-zero if any fail. Designed for CI:
+
+```bash
+# Run analysis and check thresholds in one step
+git-pulse gate --path . --max-agent-share 0.60 --min-bus-factor 2
+
+# Or check an existing report
+git-pulse analyze --json > report.json
+git-pulse gate --report report.json \
+  --max-agent-share 0.60 \
+  --max-rework 0.50 \
+  --min-bus-factor 2 \
+  --max-hot-risk 5
+```
+
+Available thresholds:
+
+| Flag | Fails when |
+|------|-----------|
+| `--max-agent-share` | Agent commit share exceeds this (0.0–1.0) |
+| `--max-rework` | File rework rate exceeds this |
+| `--max-line-rework` | Per-line rework rate exceeds this |
+| `--min-bus-factor` | Repository bus factor is below this |
+| `--max-hot-risk` | Number of hot-risk files exceeds this |
+
+### SVG Badges
+
+Generate shields.io-compatible badge SVGs from a report:
+
+```bash
+git-pulse badge --report report.json --output badges/
+```
+
+This creates `agent-share.svg`, `bus-factor.svg`, and `hot-risk.svg` in the output directory. Colors follow standard conventions (green = healthy, yellow = warning, red = critical).
+
 ## Example Output
 
-`git-pulse analyze` prints attribution, authors, churn, velocity, sessions, and
-hotspots. No API key is involved in any of it — this is git metadata, counted.
+`git-pulse analyze` prints attribution, authors, churn, velocity, sessions,
+hotspots, ownership, risk, and more. No API key is involved — this is git metadata, counted.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/srikanth1003/git-pulse/main/docs/images/report-dark.png">
@@ -212,7 +298,7 @@ $ git-pulse analyze ~/src/shipyard --days 120
 ╭───────────────── git-pulse ─────────────────╮
 │ git-pulse-demo  ·  branch main  ·  55b89860 │
 │ 2026-01-06 → 2026-05-05  ·  376 commits     │
-╰───── v0.1.1.dev24+g86dac6cf1.d20260823 ─────╯
+╰───── v0.2.0 ─────╯
 Attribution
 ┏━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ Metric            ┃                                                          Value ┃
@@ -236,7 +322,7 @@ Authors
 └────────────────────────┴───────┴─────────┴─────────────┘
 ```
 
-Churn, velocity, session, and hotspot tables follow; they are shown as figures above.
+Churn, velocity, session, hotspot, ownership, risk, and complexity tables follow.
 
 </details>
 
@@ -302,79 +388,27 @@ enabled = false
 model = "anthropic/claude-sonnet-4-20250514"
 ```
 
-## CLI Options
-
-Pasted from `--help`, so it cannot drift from the code. `--include` and
-`--exclude` are repeatable.
+## Commands
 
 ```
-$ git-pulse --help
-
- Usage: git-pulse [OPTIONS] COMMAND [ARGS]...
-
- Measure how much of your git history was written by AI agents, and what it cost.
-
- Commands:
-   analyze  Analyze a repository's history and report agent vs. human contribution.
-   version  Show the installed version.
-   cache    Inspect or clear the history cache.
-   config   Show or scaffold configuration.
-```
-
-```
-$ git-pulse analyze --help
-
- Usage: git-pulse analyze [OPTIONS] [PATH]
-
- Analyze a repository's history and report agent vs. human contribution.
-
- Runs entirely offline by default; --llm adds an interpretive narrative.
-
- Arguments:
-   path                       [PATH]   Path to a git repository. [default: .]
-
- Options:
-   --days                     INTEGER  Analyze the last N days.
-   --commits                  INTEGER  Analyze the last N commits.
-   --since                    TEXT     Analyze commits after this date (ISO 8601).
-   --until                    TEXT     Analyze commits before this date.
-   --branch                   TEXT     Branch to analyze (default: current).
-   --include                  TEXT     Only files matching this glob.
-   --exclude                  TEXT     Skip files matching this glob.
-   --include-merges                    Include merge commits. [default: no]
-   --max-hotspots             INTEGER  Maximum hotspots to report.
-   --llm                               Add an LLM narrative (needs an API key).
-   --model                    TEXT     LiteLLM model string, e.g. gpt-4o-mini.
-   --json                              Emit JSON on stdout.
-   --output                   TEXT     Also write the JSON report to this file.
-   --no-cache                          Bypass the history cache.
-   --refresh                           Recompute and overwrite the cache.
-   --config                   TEXT     Path to a config file.
-```
-
-```
-$ git-pulse cache --help
-
- Usage: git-pulse cache [OPTIONS] COMMAND [ARGS]...
-
- Commands:
-   info   Show cache location, entry count, and size.
-   clear  Delete every cached history entry.
-
-$ git-pulse config --help
-
- Usage: git-pulse config [OPTIONS] COMMAND [ARGS]...
-
- Commands:
-   show  Print the effective configuration and where each section came from.
-   init  Write a commented configuration file.
+git-pulse analyze [PATH]           The report. Default output is terminal; add
+                                   --json, --markdown, --csv, or --html.
+git-pulse report OUTPUT [--path]   Save a report to a file (.json, .md, .csv, .html).
+git-pulse compare BEFORE AFTER     Diff two JSON reports and show metric deltas.
+git-pulse gate [--report FILE]     Check thresholds; exit 1 if any fail. For CI.
+git-pulse badge --report FILE      Generate SVG badge files (agent-share, bus-factor, risk).
+git-pulse version                  Installed version.
+git-pulse cache info               Cache location, entry count, size.
+git-pulse cache clear              Delete every cached entry.
+git-pulse config show              Effective config and where each section came from.
+git-pulse config init              Write a commented starter config.
 ```
 
 ## How It Works
 
 `gitlayer` collects and caches history → `attribution` scores each commit →
-`analysis` computes churn, rework, velocity, sessions, and hotspots → `render`
-emits terminal output or JSON → an optional `analyst` narrative sits on top.
+`analysis` computes all metrics → `render` emits terminal, JSON, markdown, CSV,
+or HTML → an optional `analyst` narrative sits on top.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/srikanth1003/git-pulse/main/docs/images/architecture-dark.png">
@@ -385,30 +419,32 @@ emits terminal output or JSON → an optional `analyst` narrative sits on top.
 <summary>Same diagram as text</summary>
 
 ```
-cli         analyze · cache · config · version
+cli         analyze · report · compare · gate · badge · cache · config · version
  ↓
 report      builds one immutable Report value
  ↓
-analysis    churn · velocity · sessions · hotspots
+analysis    churn · velocity · sessions · hotspots · coupling · ownership
+            line-lifetime · line-rework · survival · SZZ · risk · complexity
+            commit-classification
  ↓
-gitlayer    git plumbing · history cache
+gitlayer    git plumbing · history cache · patch collection · diff parsing
  ↓
-git         log · numstat · notes
+git         log · numstat · blame · notes
 
 shared by every layer above:
-  attribution   signals · providers
+  attribution   signals · providers (11 agents)
   models        typed history & report
-  render        terminal · JSON v1
+  render        terminal · JSON v1 · markdown · CSV · HTML+SVG
   analyst       optional LLM narrative  ← the only part that needs an API key
 ```
 
 </details>
 
 **Deterministic layer** (no LLM, no network):
-- `gitlayer` reads history through `git log --numstat -z` and unified-diff parsing, and caches the result on disk keyed by HEAD and the collection options
+- `gitlayer` reads history through `git log --numstat -z`, unified-diff parsing, and `git blame --porcelain`, caching results on disk keyed by HEAD and collection options
 - `attribution` scores each commit against 11 provider signatures — trailers, bot identities, subject prefixes, message markers, and git notes — and records which signal matched
-- `analysis` computes per-file churn and agent share, file rework rates, velocity, per-author work sessions, and spatiotemporal hotspots
-- `render` emits the rich terminal report or versioned JSON
+- `analysis` computes per-file churn, file and per-line rework, velocity, sessions, hotspots, temporal coupling, ownership/bus factor, Kaplan-Meier survival, SZZ bug-introduction tracing, risk quadrants, indentation complexity, and revert/fix classification
+- `render` emits terminal, JSON, markdown, CSV, or self-contained HTML with inline SVG charts
 
 **Optional analyst layer** (`--llm`):
 - Receives the same JSON a user gets from `--json`, minus the per-day series, raw SHAs, and any narrative from an earlier run — a model must not launder its own prior output back in as evidence
@@ -418,6 +454,7 @@ shared by every layer above:
 A `Report` is a pure value. Renderers never hold a repository handle, so a report
 can be serialised, cached, or diffed long after the checkout is gone. The JSON
 shape is a versioned contract — see [docs/json-schema.md](docs/json-schema.md).
+Methodology and assumptions are documented in [METHODOLOGY.md](METHODOLOGY.md).
 
 ## Releases & Downloads
 
@@ -439,7 +476,7 @@ git clone https://github.com/srikanth1003/git-pulse.git
 cd git-pulse
 pip install -e ".[dev]"
 
-# Run tests
+# Run tests (334 and counting)
 pytest
 
 # Run on any repo
@@ -451,12 +488,12 @@ git-pulse analyze /path/to/any/repo --days 14
 The version is derived from the git tag by [hatch-vcs](https://github.com/ofek/hatch-vcs) — there is no version string to edit. Tag, then build and upload:
 
 ```bash
-git tag -a v0.2.0 -m "git-pulse 0.2.0"
-git push origin v0.2.0
+git tag -a v0.7.0 -m "git-pulse 0.7.0"
+git push origin v0.7.0
 python -m build && twine upload dist/*
 ```
 
-Builds from an untagged or dirty tree produce a local dev version (e.g. `0.1.1.dev0+g1b73c1f`), which PyPI rejects by design — release only from a clean tagged commit.
+Builds from an untagged or dirty tree produce a local dev version (e.g. `0.6.1.dev0+g8a37b1f`), which PyPI rejects by design — release only from a clean tagged commit.
 
 ## License
 

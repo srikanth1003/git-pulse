@@ -24,6 +24,14 @@ removing a key, or changing a value's type, bumps `schema_version`. Pin on
 | `velocity` | object | rates, `peak_day`, and a `per_day[]` series |
 | `sessions` | object | gap-clustered work sessions per author |
 | `hotspots` | object | `total_detected` plus the top-scoring `hotspots[]` |
+| `coupling` | object | `total_detected` and `pairs[]` of temporally-coupled file pairs |
+| `ownership` | object or null | per-file ownership, `repo_bus_factor`, `total_authors` |
+| `line_rework` | object or null | true per-line rework rates, overall and split by agent/human |
+| `commit_classification` | object or null | `reverts[]` and `fixes[]` with evidence strings |
+| `survival` | object or null | Kaplan-Meier survival curves (overall, agent, human) with median days |
+| `szz` | object or null | SZZ bug-introduction `introductions[]` with introducing/fix SHA pairs |
+| `risk` | object or null | risk quadrant counts (`hot_risk`, `quiet_risk`, `active`, `stable`) and `files[]` |
+| `complexity` | object or null | indentation-based complexity (`repo_avg_depth`, `repo_max_depth`, `files[]`) |
 | `narrative` | object or null | `null` unless `--llm` produced a result |
 | `warnings` | array of string | conditions that reduce trust in the numbers — always check this |
 
@@ -45,8 +53,16 @@ removing a key, or changing a value's type, bumps `schema_version`. Pin on
 - `hotspots.hotspots[].score` is `modification_count² / (1 + time_span_hours)`.
   It is comparable within one report; do not compare scores across repositories.
 - `rework.file_rework_rate` is a file-granularity upper bound: it counts files
-  that came back for another edit, not lines that were overwritten. A true
-  per-line measurement needs a line-lifetime index, which is planned.
+  that came back for another edit, not lines that were overwritten. Use
+  `line_rework.line_rework_rate` for the true per-line measurement.
+- `coupling.pairs[].coupling_ratio` is `shared_commits / min(commits_a, commits_b)`.
+- `ownership.files[].bus_factor` is the minimum authors owning >50% of lines.
+- `survival.overall_median_days` is `null` when all lines are still alive
+  (right-censored) and the survival curve never crosses 0.50.
+- `risk.files[].quadrant` is one of `hot-risk`, `quiet-risk`, `active`, `stable`.
+- `commit_classification.fixes[].evidence` is the text that triggered the
+  classification (the subject line for prefix matches, the body match for
+  "fixes #N" patterns).
 - On an empty history every collection is empty, `scope.first_commit_at` is
   `null`, and `warnings` explains why.
 
