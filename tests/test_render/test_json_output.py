@@ -34,6 +34,8 @@ TOP_LEVEL_KEYS = {
     "szz",
     "risk",
     "complexity",
+    "checkpoints",
+    "traces",
     "narrative",
     "warnings",
 }

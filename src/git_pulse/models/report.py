@@ -97,6 +97,14 @@ class Report:
     risk: RiskResult | None = None
     complexity: ComplexityResult | None = None
 
+    # Agent checkpoints and traces
+    checkpoint_sessions: int = 0
+    checkpoint_total: int = 0
+    checkpoint_attempt_lines: int = 0
+    trace_files: int = 0
+    trace_ranges: int = 0
+    trace_models: dict[str, int] = field(default_factory=dict)
+
     # Optional LLM layer — ``narrative`` is the summary text.
     narrative: str | None = None
     insights: tuple[Insight, ...] = field(default_factory=tuple)

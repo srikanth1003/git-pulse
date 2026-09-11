@@ -21,8 +21,10 @@ from git_pulse.analysis.survival import analyze_survival
 from git_pulse.analysis.szz import analyze_szz
 from git_pulse.analysis.velocity import analyze_velocity
 from git_pulse.attribution.engine import AttributionEngine
+from git_pulse.attribution.trace import load_traces
 from git_pulse.config import GitPulseConfig
 from git_pulse.gitlayer.cache import HistoryCache
+from git_pulse.gitlayer.checkpoints import discover_checkpoints
 from git_pulse.gitlayer.collect import CollectOptions, collect_history
 from git_pulse.gitlayer.patches import collect_patches, most_touched_paths
 from git_pulse.gitlayer.repo import GitRepo
@@ -70,6 +72,9 @@ def build_report(
     classification = classify_commits(history)
     churn_result = analyze_churn(history, limit=config.analysis.max_hotspots)
 
+    cp_stats = discover_checkpoints(repo)
+    trace_idx = load_traces(path)
+
     return Report(
         repo_path=str(path),
         repo_name=path.resolve().name,
@@ -95,6 +100,13 @@ def build_report(
         szz=analyze_szz(history, repo, classification),
         risk=analyze_risk(churn_result, ownership),
         complexity=analyze_complexity(repo, history.head_sha, top_paths) if top_paths else None,
+        checkpoint_sessions=cp_stats.total_sessions,
+        checkpoint_total=cp_stats.total_checkpoints,
+        checkpoint_attempt_lines=cp_stats.total_attempts_insertions
+        + cp_stats.total_attempts_deletions,
+        trace_files=trace_idx.total_files,
+        trace_ranges=trace_idx.total_ranges,
+        trace_models=trace_idx.models_seen,
         warnings=_warnings(history),
     )
 

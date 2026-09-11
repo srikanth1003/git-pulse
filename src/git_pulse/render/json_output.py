@@ -73,6 +73,16 @@ def _payload(report: Report) -> dict[str, Any]:
         "szz": _szz(report.szz),
         "risk": _risk(report.risk),
         "complexity": _complexity(report.complexity),
+        "checkpoints": {
+            "sessions": report.checkpoint_sessions,
+            "total": report.checkpoint_total,
+            "attempt_lines": report.checkpoint_attempt_lines,
+        },
+        "traces": {
+            "files": report.trace_files,
+            "ranges": report.trace_ranges,
+            "models": report.trace_models,
+        },
         "narrative": _narrative(report),
         "warnings": list(report.warnings),
     }

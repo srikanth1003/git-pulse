@@ -44,6 +44,7 @@ def render_terminal(report: Report, *, console: Console | None = None) -> None:
     _szz(report, console)
     _risk(report, console)
     _complexity(report, console)
+    _checkpoints_and_traces(report, console)
     _narrative(report, console)
     _warnings(report, console)
 
@@ -274,6 +275,20 @@ def _complexity(report: Report, console: Console) -> None:
     console.print(
         f"  Complexity (indentation): avg depth {c.repo_avg_depth:.1f}, max {c.repo_max_depth}"
     )
+
+
+def _checkpoints_and_traces(report: Report, console: Console) -> None:
+    if report.checkpoint_sessions > 0:
+        console.print(
+            f"  Agent checkpoints: [bold]{report.checkpoint_total}[/bold] across "
+            f"{report.checkpoint_sessions} sessions, {report.checkpoint_attempt_lines} attempt lines"
+        )
+    if report.trace_files > 0:
+        models = ", ".join(f"{k} ({v})" for k, v in sorted(report.trace_models.items()))
+        console.print(
+            f"  Agent traces: [bold]{report.trace_ranges}[/bold] ranges across "
+            f"{report.trace_files} files" + (f" — {models}" if models else "")
+        )
 
 
 def _narrative(report: Report, console: Console) -> None:
